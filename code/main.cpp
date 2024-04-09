@@ -1,9 +1,12 @@
 #include "decoder.h"
 #include "instructions.h"
+#include "status.h"
 
 int main (int argc, char* argv[]) {
+    // Initialize objects
     Instructions instSet;
     Decoder decoder;
+    Status status;
 
     // Error checking for command line arguments
     if (argc < 2) {
@@ -11,9 +14,11 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
+    // Load trace file 
     std::string fileName = std::string(argv[1]);
     std::ifstream traceFile(fileName);
     
+    // Error checking for loading file
     if (!traceFile) {
         std::cerr << "Error: could not open file " << fileName << std::endl;
         return 1;
@@ -22,20 +27,13 @@ int main (int argc, char* argv[]) {
     std::string nxtInstrStr; // raw value from trace file
     while (std::getline(traceFile, nxtInstrStr)) {
         int nxtInstr = std::stoi(nxtInstrStr, 0, 16); // convert to int for parsing
-        // decoder.parseInstr(nxtInstr);
 
         // End if HALT instruction is found
-        if (decoder.parseInstr(nxtInstr) == 0) {
+        if (decoder.nextInstr(nxtInstr, status) == 0) {
             break;
         }
-
-        #ifdef DEBUG
-        printf("Instruction: ");
-        printBinary(nxtInstr);
-        #endif
     }
 
-    decoder.printReport();
-
+    status.printReport();
     return 0;
 }

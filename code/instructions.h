@@ -1,3 +1,15 @@
+/**
+ * @file instructions.h
+ * @author Lynn (diemhan@pdx.edu)
+ * @brief 
+ * @version 0.1
+ * @date 2024-04-09
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ * This file includes the Instructions class, which is responsible for defining the instruction set. This is used to determine how
+ * to parse and execute the instructions.
+ */
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
