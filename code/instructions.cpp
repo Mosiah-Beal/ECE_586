@@ -15,25 +15,25 @@ void Instructions::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
-    setInstruction(0, 0, 1); // ADD
-    setInstruction(2, 0, 1); // SUB
-    setInstruction(4, 0, 1); // MUL
-    setInstruction(6, 1, 1); // OR
-    setInstruction(8, 1, 1); // AND
-    setInstruction(10, 1, 1); // XOR
+    setInstruction("ADD", 0, 0, 1); // ADD
+    setInstruction("SUB", 2, 0, 1); // SUB
+    setInstruction("MUL", 4, 0, 1); // MUL
+    setInstruction("OR", 6, 1, 1); // OR
+    setInstruction("AND", 8, 1, 1); // AND
+    setInstruction("XOR", 10, 1, 1); // XOR
 
-    setInstruction(12, 2, 0); // LDW
-    setInstruction(13, 2, 0); // STW
-    setInstruction(1, 0, 0); // ADDI
-    setInstruction(3, 0, 0); // SUBI
-    setInstruction(5, 0, 0); // MULI
-    setInstruction(7, 1, 0); // ORI
-    setInstruction(9, 1, 0); // ANDI
-    setInstruction(11, 1, 0); // XORI
-    setInstruction(15, 3, 0); // BEQ
-    setInstruction(14, 3, 0); // BZ
-    setInstruction(16, 3, 0); // JR
-    setInstruction(17, 3, 0); // HALT
+    setInstruction("LDW", 12, 2, 0); // LDW
+    setInstruction("STW", 13, 2, 0); // STW
+    setInstruction("ADDI", 1, 0, 0); // ADDI
+    setInstruction("SUBI", 3, 0, 0); // SUBI
+    setInstruction("MULI", 5, 0, 0); // MULI
+    setInstruction("ORI", 7, 1, 0); // ORI
+    setInstruction("ANDI", 9, 1, 0); // ANDI
+    setInstruction("XORI", 11, 1, 0); // XORI
+    setInstruction("BEQ", 15, 3, 0); // BEQ
+    setInstruction("BZ", 14, 3, 0); // BZ
+    setInstruction("JR", 16, 3, 0); // JR
+    setInstruction("HALT", 17, 3, 0); // HALT
 }
 
 instruction Instructions::getInstruction(int opcode) {
@@ -49,8 +49,9 @@ instruction Instructions::getInstruction(int opcode) {
     }
 }
 
-void Instructions::setInstruction(int opcode, int type, bool addressMode) {
+void Instructions::setInstruction(std::string instrName, int opcode, int type, bool addressMode) {
     instruction inst;
+    inst.name = instrName;
     inst.type = type;
     inst.addressMode = addressMode;
 

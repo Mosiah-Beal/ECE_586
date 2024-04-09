@@ -1,30 +1,8 @@
 #include "decoder.h"
 
-// #define DEBUG
+#define DEBUG
 
 Decoder::Decoder() {
-}
-
-int Decoder::parseTraceFile(std::string fileName) {
-    std::ifstream traceFile(fileName);
-    
-    if (!traceFile) {
-        std::cerr << "Error: could not open file " << fileName << std::endl;
-        return 1;
-    }
-
-    std::string traceStr;
-    while (std::getline(traceFile, traceStr)) {
-        int trace = std::stoi(traceStr, 0, 16);
-        int opcode = getOpcode(trace);
-        // instruction inst = instructions.getInstruction(opcode);
-        // std::cout << "Type: " << inst.type << ", Address mode: " << inst.addressMode << std::endl;
-
-        #ifdef DEBUG
-        printf("Trace: ");
-        printBinary(trace);
-        #endif
-    }
 }
 
 void Decoder::printBinary(int n) {
@@ -35,13 +13,59 @@ void Decoder::printBinary(int n) {
     printf("\n");
 }
 
+int Decoder::parseInstr(int line) {
+    Instructions instructions;
+    int opcode;
+    
+    opcode = getOpcode(line); // get the opcode from the line
+    instruction inst = instructions.getInstruction(opcode); // which instruction is it?
+    splitInstruction(line, inst); // "execute" the instruction
+    
+    // End program after HALT instruction is found
+    if (opcode == 17) {
+        return 0;
+    }
+    
+    return 1; 
+}
+
 int Decoder::getOpcode(int trace) {
     int opcode = (trace & 0xFC000000) >> 26;
 
     #ifdef DEBUG
-    printf("Opcode: ");
-    printBinary(opcode);
+    // printf("Opcode: ");
+    // printBinary(opcode);
     #endif
 
     return opcode;
+}
+
+void Decoder::splitInstruction(int line, instruction inst) {
+    typeExecd[inst.type]++; // increment the number of times this instruction type was executed
+
+    if (inst.addressMode == 0) { // Immediate addressing
+        int imm = line & 0xFFFF;
+        int rt = (line & 0x1F0000) >> 16;
+        int rs = (line & 0x3E00000) >> 21;
+
+        #ifdef DEBUG
+        printf("%s R%d, R%d, #%d\n", inst.name.c_str(), rt, rs, imm);
+        #endif
+    } else {
+        // register
+        int rs = (line & 0x03E00000) >> 21;
+        int rt = (line & 0x001F0000) >> 16;
+        int rd = (line & 0x0000F800) >> 11;
+
+        #ifdef DEBUG
+        printf("%s R%d, R%d, R%d\n", inst.name.c_str(), rd, rs, rt);
+        #endif
+    }
+}
+
+void Decoder::printReport() {
+    std::cout << "Arithmetic instructions executed: " << typeExecd[0] << std::endl;
+    std::cout << "Logical instructions executed: " << typeExecd[1] << std::endl;
+    std::cout << "Memory access instructions executed: " << typeExecd[2] << std::endl;
+    std::cout << "Control flow instructions executed: " << typeExecd[3] << std::endl;
 }
