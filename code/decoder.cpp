@@ -5,7 +5,7 @@
 Decoder::Decoder() {
 }
 
-int Decoder::parseNextLine(std::string fileName) {
+int Decoder::parseTraceFile(std::string fileName) {
     std::ifstream traceFile(fileName);
     
     if (!traceFile) {
