@@ -1,9 +1,17 @@
 #include "instructions.h"
 
+/**
+ * @brief Construct a new Instructions:: Instructions object
+ * Upon construction, define the instruction set for the simulator
+ * 
+ */
 Instructions::Instructions() {
     defineInstSet();
 }
 
+/**
+ * @brief This function adds all possible/legal instructions and their addressing mode/type
+ */
 void Instructions::defineInstSet() {
     /**
      * Type of instruction:
@@ -36,6 +44,13 @@ void Instructions::defineInstSet() {
     setInstruction("HALT", 17, 3, 0); // HALT
 }
 
+/**
+ * @brief Based on an instruction's op code, this function determines what instruction it is, as 
+ * well as its addressing mode and type
+ * 
+ * @param opcode the instruction's op code
+ * @return instruction -- struct with information about the instruction's name, addressing mode and type
+ */
 instruction Instructions::getInstruction(int opcode) {
     if (instructionSet.count(opcode) > 0) {
         return instructionSet.at(opcode);
@@ -49,6 +64,14 @@ instruction Instructions::getInstruction(int opcode) {
     }
 }
 
+/**
+ * @brief Define an individual instruction's information
+ * 
+ * @param instrName the instruction as it appears in assembly code (i.e ADD, ADDI)
+ * @param opcode opcode in decimal form (int)
+ * @param type 0 = arithmetic, 1 = logical, 2 = memory access, 3 = control flow
+ * @param addressMode 0 = immediate, 1 = register
+ */
 void Instructions::setInstruction(std::string instrName, int opcode, int type, bool addressMode) {
     instruction inst;
     inst.name = instrName;

@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @author Lynn Nguyen (diemhan@pdx.edu)
+ * @brief Functional MIPS simulator
+ * @version 0.1
+ * @date 2024-04-14
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #include "decoder.h"
 #include "instructions.h"
 #include "status.h"

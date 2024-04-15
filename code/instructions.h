@@ -15,17 +15,18 @@
 
 #include <map>
 
-/**
- * Type of instruction:
- * 0 = arithmetic
- * 1 = logical
- * 2 = memory access
- * 3 = control flow
- */
+// Used to parse instruction and update type counter
 typedef struct {
     std::string name; // for print/debugging
-    int type;
     bool addressMode; // 0 = immediate, 1 = register
+    int type;
+    /**
+     * Type of instruction:
+     * 0 = arithmetic
+     * 1 = logical
+     * 2 = memory access
+     * 3 = control flow
+     */
 } instruction;
 
 class Instructions

@@ -5,6 +5,11 @@
 Decoder::Decoder() {
 }
 
+/**
+ * @brief Used to check bit-wise operations on ints
+ * 
+ * @param n int to be printed in binary
+ */
 void Decoder::printBinary(int n) {
     unsigned i;
     for (i = 1 << 31; i > 0; i = i / 2) {
@@ -13,6 +18,14 @@ void Decoder::printBinary(int n) {
     printf("\n");
 }
 
+/**
+ * @brief The highest level function for the decoder. This function takes in a line from the input 
+ * file, parses it, and changes the processor's state to match the executed instruction
+ * 
+ * @param line next instruction (in int) to be decoded
+ * @param status class that keeps track of the processor's state, including registers, memory and PC
+ * @return int 
+ */
 int Decoder::nextInstr(int line, Status &status) {
     Instructions instructions;
     InstrInfo execInstr;
@@ -39,11 +52,25 @@ int Decoder::nextInstr(int line, Status &status) {
     }
 }
 
+/**
+ * @brief Calculates the opcode of a given instruction
+ * 
+ * @param trace the encoded instruction to extract the op code from
+ * @return int op code
+ */
 int Decoder::getOpcode(int trace) {
     int opcode = (trace & 0xFC000000) >> 26;
     return opcode;
 }
 
+/**
+ * @brief This instruction parses a given instruction, extracting immediate values, registers to
+ * to be operated on, and the operation to be executed
+ * 
+ * @param line encoded instruction (in int, decimal representation) to be parsed
+ * @param inst instruction struct that the "metadata" (type, addressing mode) for the type of instruction (i.e ADD, ADDI)
+ * @param execInstr InstrInfo struct that will contain the register and immediate values for a specific instruction (line in the trace file)
+ */
 void Decoder::parseInstruction(int line, instruction inst, InstrInfo &execInstr) {
 
     if (inst.addressMode == 0) { // Immediate addressing
@@ -67,7 +94,13 @@ void Decoder::parseInstruction(int line, instruction inst, InstrInfo &execInstr)
     }
 }
 
-// Register addressing
+/**
+ * @brief This function is what actually performs the necessary operations to "execute" an instruction (i.e adding
+ * values for ADD/ADDI instructions, then changing the processor's registers, PC and state accordingly)
+ * 
+ * @param execInstr struct containing all the immediate and register values for the given instruction
+ * @param status class that keeps track of the machine's state
+ */
 void Decoder::executeInstruction(InstrInfo &execInstr, Status &status) {
     switch(execInstr.opcode) {
         // REGISTER

@@ -23,12 +23,14 @@
 #include "instructions.h"
 #include "status.h"
 
+// Holds all register and immediate values for a given instruction
+// Depending on format, some fields will be unused
 typedef struct {
-    int opcode;
-    int rs;
-    int rt;
-    int rd;
-    int imm;
+    int opcode; // op code -- determines operation
+    int rs;     // source register
+    int rt;     // temp register
+    int rd;     // destination register
+    int imm;    // immediate value
 } InstrInfo;
 
 
