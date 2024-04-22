@@ -70,7 +70,7 @@ unsigned int registers[NUM_REGISTERS];
 
 void ADD (instruction_t* instruction){
 
-registers[instuction->rtype_t->rd] = registers[instruction->rtype_t->rs] + registers[instruction->rtype_t->rt];
+registers[instruction->rtype_instr->rd] = registers[instruction->rtype_instr->rs] + registers[instruction->rtype_instr->rt];
 
 }
 
@@ -93,61 +93,57 @@ void parseFile(const char* filename, long* instructions) {
 
  }
 
-instruction_t* populateStruct(long* bin) {
-    unsigned int mask;
-    instruction_t instruction;
-    instruction.rtype_instr = malloc(sizeof(rtype_t));
-    instruction.itype_instr = malloc(sizeof(itype_t));
-    instruction.jtype_instr = malloc(sizeof(jtype_t));
-     
+instruction_t* populateStruct(long bin, instruction_t* instruction) {
+    unsigned int mask;     
     int i = 0;
 
     // R-Type
     mask = 0xFC000000; // Mask for opcode (6 bits)
-    instruction.rtype_instr->opcode = (mask & bin[i]) >> 26;
+    instruction->rtype_instr->opcode = (mask & bin) >> 26;
     mask = 0x03E00000; // Mask for rs (5 bits)
-    instruction.rtype_instr->rs = (mask & bin[i]) >> 21;
+    instruction->rtype_instr->rs = (mask & bin) >> 21;
     mask = 0x001F0000; // Mask for rt (5 bits)
-    instruction.rtype_instr->rt = (mask & bin[i]) >> 16;
+    instruction->rtype_instr->rt = (mask & bin) >> 16;
     mask = 0x0000F800; // Mask for rd (5 bits)
-    instruction.rtype_instr->rd = (mask & bin[i]) >> 11;
+    instruction->rtype_instr->rd = (mask & bin) >> 11;
     mask = 0x000007C0; // Mask for shift (5 bits)
-    instruction.rtype_instr->shift = (mask & bin[i]) >> 6;
+    instruction->rtype_instr->shift = (mask & bin) >> 6;
     mask = 0x0000003F; // Mask for funct (6 bits)
-    instruction.rtype_instr->funct = mask & bin[i];
+    instruction->rtype_instr->funct = mask & bin;
 
     // I-Type
     mask = 0xFC000000; // Mask for opcode (6 bits)
-    instruction.itype_instr->opcode = (mask & bin[i]) >> 26;
+    instruction->itype_instr->opcode = (mask & bin) >> 26;
     mask = 0x03E00000; // Mask for rs (5 bits)
-    instruction.itype_instr->rs = (mask & bin[i]) >> 21;
+    instruction->itype_instr->rs = (mask & bin) >> 21;
     mask = 0x001F0000; // Mask for rt (5 bits)
-    instruction.itype_instr->rt = (mask & bin[i]) >> 16;
+    instruction->itype_instr->rt = (mask & bin) >> 16;
     mask = 0x0000FFFF; // Mask for i_address (16 bits)
-    instruction.itype_instr->i_address = mask & bini1];
+    instruction->itype_instr->i_address = mask & bin;
 
     // J-Type
     mask = 0xFC000000; // Mask for opcode (6 bits)
-    instruction.jtype_instr->opcode = (mask & bin[i]) >> 26;
+    instruction->jtype_instr->opcode = (mask & bin) >> 26;
     mask = 0x03FFFFFF; // Mask for j_address (26 bits)
-    instruction.jtype_instr->j_address = mask & bin[i];
+    instruction->jtype_instr->j_address = mask & bin;
 
-    printf("R-Type Opcode: %X\n", instruction.rtype_instr->opcode);
-    printf("I-Type Opcode: %X\n", instruction.itype_instr->opcode);
-    printf("J-Type Opcode: %X\n", instruction.jtype_instr->opcode);
-    free(instruction.rtype_instr);
-    free(instruction.itype_instr);
-    free(instruction.jtype_instr);
+    printf("R-Type Opcode: %X\n", instruction->rtype_instr->opcode);
+    printf("I-Type Opcode: %X\n", instruction->itype_instr->opcode);
+    printf("J-Type Opcode: %X\n", instruction->jtype_instr->opcode);
+    free(instruction->rtype_instr);
+    free(instruction->itype_instr);
+    free(instruction->jtype_instr);
 
     return instruction; 
 }
 
 
-
 int main() {
 long instructions[MAX_INSTRUCTIONS];
 parseFile("instructions.txt", instructions);
-populateStruct(instructions);
+instruction_t* pipeline[5];
+populateStruct(instructions[0], pipeline[0]);
+
 return 0;
 }
 

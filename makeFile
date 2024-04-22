@@ -5,7 +5,7 @@ CC = g++
 CFLAGS = -Wall -Wextra -std=c++11
 
 # Source files
-SRCS = main.cpp file1.cpp file2.cpp
+SRCS = Dummy.cpp parce.c
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -15,6 +15,9 @@ TARGET = myprogram
 
 # Default target
 all: $(TARGET)
+
+parce: parce.c
+	$(CC) $(CFLAGS) -o parce parce.c
 
 # Compile source files into object files
 %.o: %.cpp
