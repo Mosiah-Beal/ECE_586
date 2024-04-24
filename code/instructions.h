@@ -14,6 +14,7 @@
 #define INSTRUCTIONS_H
 
 #include <map>
+#include <string>
 
 // Used to parse instruction and update type counter
 typedef struct {
