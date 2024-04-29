@@ -59,7 +59,7 @@ int Decoder::nextInstr(int line, Status &status) {
  * @return int op code
  */
 int Decoder::getOpcode(int trace) {
-    int opcode = (trace & 0xFC000000) >> 26;
+    int opcode = trace >> 26;
     return opcode;
 }
 

@@ -16,10 +16,22 @@
 #include <map>
 #include <string>
 
+// Holds all register and immediate values for a given instruction
+// Depending on format, some fields will be unused
+typedef struct {
+    int opcode; // op code -- determines operation
+    int rs;     // source register
+    int rt;     // temp register
+    int rd;     // destination register
+    int imm;    // immediate value
+} InstrInfo;
+
+
 // Used to parse instruction and update type counter
 typedef struct {
-    std::string name; // for print/debugging
-    bool addressMode; // 0 = immediate, 1 = register
+    InstrInfo instr;    // Struct for decoded instruction
+    std::string name;   // for print/debugging
+    bool addressMode;   // 0 = immediate, 1 = register
     int type;
     /**
      * Type of instruction:
@@ -29,6 +41,8 @@ typedef struct {
      * 3 = control flow
      */
 } instruction;
+
+
 
 class Instructions
 {
