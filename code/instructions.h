@@ -30,6 +30,7 @@ typedef struct {
 // Used to parse instruction and update type counter
 typedef struct {
     InstrInfo instr;    // Struct for decoded instruction
+    int binInstr;       // Binary representation of instruction
     std::string name;   // for print/debugging
     bool addressMode;   // 0 = immediate, 1 = register
     int type;

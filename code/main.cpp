@@ -11,12 +11,14 @@
 #include "decoder.h"
 #include "instructions.h"
 #include "status.h"
+#include "pipeline.h"
 using namespace std;
 
 int main (int argc, char* argv[]) {
     // Initialize objects
     Decoder decoder;
     Status status;
+    Pipeline pipeline;
 
     // Error checking for command line arguments
     if (argc < 2) {
@@ -38,6 +40,7 @@ int main (int argc, char* argv[]) {
     while (getline(traceFile, nxtInstrStr)) {
         int nxtInstr = stoi(nxtInstrStr, 0, 16); // convert to int for parsing
 
+        pipeline.moveStages(nxtInstr); // move stages in pipeline
         // End if HALT instruction is found
         if (decoder.nextInstr(nxtInstr, status) == 0) {
             break;

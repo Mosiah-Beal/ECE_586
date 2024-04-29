@@ -8,12 +8,13 @@
 // #include <fstream>
 
 #include "instructions.h"
+#include "status.h"
 
 class Pipeline {
     private:
             int numStalls;    // Number of stalls inserted
             int ALUresult;    // Result of ALU operation
-            instruction MDR;  // Memory Destination Register (load memory MEM stage)
+            int MDR;  // Memory Destination Register (load memory MEM stage)
 
     public:
         Pipeline();
@@ -22,6 +23,7 @@ class Pipeline {
         std::vector<instruction> stages;    // Holds instructions in each stage
         std::map<int, int> busyRegs;        // Holds register values in use (stall cycles needed)
         Instructions instructionSet;        // Initialize instruction set
+        Status status;                      // Holds status of machine
 
     private:
         // Stage functions
@@ -36,6 +38,8 @@ class Pipeline {
         void printBusyRegs(void);
         void printMDR(void);
 
+        
+
         // Pipeline control
         int getOpcode(int bin); // get the opcode from the binary instruction
         void stall(void);       // Insert stall
@@ -44,8 +48,11 @@ class Pipeline {
         // Control functions
         void initBusyRegs(void);    // Initialize busy registers to 0
         void decrBusyRegs(void);    // Decrement busy registers by 1 (at end of cycle)
+    public:
         void moveStages(int bin);      // Move instructions to next stage
-
+    private:
+        void parseInstruction(instruction &inst);
+        void executeInstruction(instruction &inst);
 
 };
 
