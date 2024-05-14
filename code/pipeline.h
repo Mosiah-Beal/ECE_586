@@ -10,6 +10,15 @@
 #include "instructions.h"
 #include "status.h"
 
+// Define constants for the stages
+#define _IF 0
+#define _ID 1
+#define _EX 2
+#define _MEM 3
+#define _WB 4
+
+
+
 class Pipeline {
     private:
             int numStalls;    // Number of stalls inserted
@@ -41,19 +50,24 @@ class Pipeline {
         
 
         // Pipeline control
-        int getOpcode(int bin); // get the opcode from the binary instruction
-        void stall(void);       // Insert stall
-        void flush(void);       // Flush pipeline after misprediction
+        int getOpcode(int bin);         // get the opcode from the binary instruction
+        void stall(int cycles);         // Insert stall cycles
+        void flush(void);               // Flush pipeline after misprediction
         
         // Control functions
         void initBusyRegs(void);    // Initialize busy registers to 0
         void decrBusyRegs(void);    // Decrement busy registers by 1 (at end of cycle)
     public:
-        void moveStages(int bin);      // Move instructions to next stage
+        void moveStages(int bin);       // Move instructions to next stage
+        int checkHalt(int bin);         // Determine if we have hit a halt instruction
+        void run(instruction &inst);    // Run the pipeline (one instruction at a time for now)
+
     private:
         void parseInstruction(instruction &inst);
         void executeInstruction(instruction &inst);
-
+        void Hazards(void);            // Check for data hazards
+        void printBinary(int n);       // Print binary representation of int
+        
 };
 
 #endif /* PIPELINE_H */

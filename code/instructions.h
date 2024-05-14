@@ -19,11 +19,11 @@
 // Holds all register and immediate values for a given instruction
 // Depending on format, some fields will be unused
 typedef struct {
-    int opcode; // op code -- determines operation
-    int rs;     // source register
-    int rt;     // temp register
-    int rd;     // destination register
-    int imm;    // immediate value
+    int opcode; // op code -- determines operation  (top 6 bits)
+    signed int rs;     // source register  (first operand) - 5 bits
+    signed int rt;     // temp register    (second operand) - 5 bits
+    signed int rd;     // destination register (result) - 5 bits or 0 if not used
+    signed int imm;    // immediate value  (for arithmetic/logical) - 16 bits
 } InstrInfo;
 
 

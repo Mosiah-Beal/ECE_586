@@ -12,8 +12,14 @@ Decoder::Decoder() {
  */
 void Decoder::printBinary(int n) {
     unsigned i;
+    unsigned count = 0;
     for (i = 1 << 31; i > 0; i = i / 2) {
         (n & i) ? printf("1") : printf("0");
+        
+        // Add spaces every 4 bits for readability
+        if(++count % 4 == 0) {
+            printf(" ");
+        }
     }
     printf("\n");
 }
