@@ -6,19 +6,31 @@
 
 using namespace std;
 
+// #define DEBUG
+
 Pipeline::Pipeline() {
     numStalls = 0;      // Initialize number of stalls to 0
     stages.resize(5);   // 5 stages in pipeline
-    // initalize all stages to NOP
-    for (int i = 0; i < 5; i++) {
-        stages[i].name = "NOP";
-    }
     initBusyRegs();     // Initialize busy registers
+    initNOPs();         // Initialize NOPs in stages
     
 }
 
 Pipeline::~Pipeline() {
 }
+
+void Pipeline::initNOPs(void) {
+    for (int i = 0; i < 5; i++) {
+        stages[i].name = "NOP";
+        stages[i].instr.opcode = 18;
+        stages[i].instr.rs = 0;
+        stages[i].instr.rt = 0;
+        stages[i].instr.rd = 0;
+        stages[i].instr.imm = 0;
+    }
+}
+
+
 
 /**
  * @brief Initialize busy registers to 0
@@ -53,54 +65,24 @@ void Pipeline::moveStages(int line) {
 
     WB(stages[4]); // Writeback the instruction waiting in this stage (pulled from MEM last cycle)
     stages[4] = stages[3]; // Pull instruction from MEM to WB
-    cout << "WB: " << stages[4].name << endl;
+    //cout << "WB: " << stages[4].name << endl;
 
     MEM(stages[3]); // Memory operation 
     stages[3] = stages[2]; // Pull instruction from EX to MEM
-    cout << "MEM: " << stages[3].name << endl;
+    //cout << "MEM: " << stages[3].name << endl;
 
     EX(stages[2]); // Execute instruction
     stages[2] = stages[1]; // Pull instruction from ID to EX
-    cout << "EX: " << stages[2].name << endl;
+    //cout << "EX: " << stages[2].name << endl;
     
     ID(stages[1]); // Decode instruction
     stages[1] = stages[0]; // Pull instruction from IF to ID
-    cout << "ID: " << stages[1].name << endl;
+    //cout << "ID: " << stages[1].name << endl;
     
     // call IF to fill IF stage
     IF(line);
-    cout << "IF: " << stages[0].name << endl;
-}
-
-void Pipeline::Hazards(void) {
-
-    // The instruction in the decode stage has registers which need to be checked for dependencies
-    int rsBusy = busyRegs[stages[_ID].instr.rs];
-    int rtBusy = busyRegs[stages[_ID].instr.rt];
-    int rdBusy = busyRegs[stages[_ID].instr.rd];
-    
-    // Check if any of the registers are in use
-    if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
-        printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
-        
-        // Stall the pipeline until the busiest register is free
-
-        // Assume RS at first
-        int maxBusy = rsBusy;
-        if (rtBusy > maxBusy) {
-            maxBusy = rtBusy;
-            // If RT is busier than RS, set maxBusy to RT
-            // Now check if RD is busier than RT
-            if (rdBusy > maxBusy) {
-                maxBusy = rdBusy;
-            }
-        }
-        else if(rdBusy > maxBusy) {
-            maxBusy = rdBusy;
-        }
-        stall(maxBusy);
-    } 
-
+    //cout << "IF: " << stages[0].name << endl << endl;
+    cout << endl;
 }
 
 
@@ -140,7 +122,7 @@ void Pipeline::IF(int inputBin) {
     int opcode = getOpcode(inputBin); // get the opcode from the line
     instruction inst = instructionSet.getInstruction(opcode);   // Fill the metadata for the instruction
     inst.binInstr = inputBin;   // store binary representation of instruction
-    stages[0] = inst;
+    stages[_IF] = inst; // store instruction in IF stage
 
 }
 
@@ -149,6 +131,7 @@ void Pipeline::parseInstruction(instruction &inst) {
         inst.instr.opcode = getOpcode(inst.binInstr);
         inst.instr.rs = (inst.binInstr & 0x3E00000) >> 21;
         inst.instr.rt = (inst.binInstr & 0x1F0000) >> 16;
+        inst.instr.rd = 0; // No destination register for immediate addressing
         inst.instr.imm = inst.binInstr & 0xFFFF;
 
         // Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
@@ -164,11 +147,50 @@ void Pipeline::parseInstruction(instruction &inst) {
         inst.instr.rs = (inst.binInstr & 0x03E00000) >> 21;
         inst.instr.rt = (inst.binInstr & 0x001F0000) >> 16;
         inst.instr.rd = (inst.binInstr & 0x0000F800) >> 11;
+        inst.instr.imm = 0; // No immediate value for register addressing
 
         #ifdef DEBUG
         printf("%s R%d, R%d, R%d\n", inst.name.c_str(), inst.instr.rd, inst.instr.rs, inst.instr.rt);
         #endif
     }
+
+    // Sanity check if any of the registers are out of bounds
+    int sanityCheck = 0;
+    if(inst.instr.rs > 31) {
+        cout << "Error: Register RS: " << inst.instr.rs << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 1;
+    }
+    if(inst.instr.rt > 31) {
+        cout << "Error: Register RT: " << inst.instr.rt << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 2;
+    }
+    if(inst.instr.rd > 31) {
+        cout << "Error: Register RD: " << inst.instr.rd << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 4;
+    }
+    if(inst.instr.imm > 65535) {
+        cout << "Error: Immediate value " << inst.instr.imm << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 8;
+    }
+
+    if(sanityCheck > 0){
+        printFields(inst);
+        cout << endl;
+        return;
+    }
+
+    // Otherwise
+    cout << "[ID]: Instruction: " << inst.name << endl;
+    stages[_ID] = inst;
+
 }
 
 void Pipeline::executeInstruction(instruction &inst) {
@@ -235,28 +257,43 @@ void Pipeline::executeInstruction(instruction &inst) {
         case 16: // JR
             status.PC += status.registers[inst.instr.rt] * 4;
             break;
+        default:
+            cout << "Error: Invalid opcode" << endl;
+            inst.name = "NOP";
+            printFields(inst);
+            break;
     }
 
+    cout << "[EX]: Instruction: " << inst.name << endl;
 }
 
 void Pipeline::ID(instruction &inst) {
+    // check for NOP (initialization)
+    if (inst.name == "NOP") {
+        cout << "[ID]: NOP" << endl;
+        return;
+    }
+    
     parseInstruction(inst);
 
-    // Display the fields of the instruction
-    cout << "\t\tOpcode: " << inst.instr.opcode << endl;
-    cout << "\t\tRS: " << inst.instr.rs << endl;
-    cout << "\t\tRT: " << inst.instr.rt << endl;
-    if(inst.addressMode == 0) {
-        cout << "\t\tIMM: " << inst.instr.imm << endl;
-    } else {
-        cout << "\t\tRD: " << inst.instr.rd << endl;
-    }
+    #ifdef DEBUG
+        // Display the fields of the instruction
+        cout << "\t\tOpcode: " << inst.instr.opcode << endl;
+        cout << "\t\tRS: " << inst.instr.rs << endl;
+        cout << "\t\tRT: " << inst.instr.rt << endl;
+        if(inst.addressMode == 0) {
+            cout << "\t\tIMM: " << inst.instr.imm << endl;
+        } else {
+            cout << "\t\tRD: " << inst.instr.rd << endl;
+        }
+    #endif
 
 }
 
 void Pipeline::EX(instruction &inst) {
     // Check for nop
     if (inst.name == "NOP") {
+        cout << "[EX]: NOP" << endl;
         return;
     }
     
@@ -267,7 +304,7 @@ void Pipeline::EX(instruction &inst) {
     executeInstruction(inst);
 
     // Update status
-    std::cout << "Type: " << inst.type << std::endl;
+    // cout << "Type: " << inst.type << endl;
     status.typeExecd[inst.type]++; // update number of times instruction type was executed
     status.PC += 4; // increment program counter
 
@@ -280,8 +317,11 @@ void Pipeline::EX(instruction &inst) {
 void Pipeline::MEM(instruction &inst) {
     // Check for nop
     if (inst.name == "NOP") {
+        cout << "[MEM]: NOP" << endl;
         return;
     }
+
+    printFields(inst);
 
     if (inst.instr.opcode == 12) { // LDW
         cout << "[MEM] MDR: " << MDR << endl;
@@ -291,19 +331,25 @@ void Pipeline::MEM(instruction &inst) {
     if (inst.addressMode == 0) { // Immediate addressing
         status.registers[inst.instr.rt] = ALUresult;
     } else { // Register addressing
+        cout << "[MEM] ALUresult: " << ALUresult << endl;
         status.registers[inst.instr.rd] = ALUresult;
     }
+
+    cout << "[MEM] Instruction: " << inst.name << endl;
 }
 
 void Pipeline::WB(instruction &inst) {
     // Check for nop
     if (inst.name == "NOP") {
+        cout << "[WB]: NOP" << endl;
         return;
     }
 
     if (inst.instr.opcode == 12) {
         status.memory[inst.instr.rt] = status.memory[MDR];
     }
+
+    cout << "[WB] Instruction: " << inst.name << endl;
 }
 
 /**
@@ -377,3 +423,48 @@ void Pipeline::run(instruction &inst) {
     */
 
 }
+
+
+void Pipeline::printFields(instruction &inst) {
+    cout << "Instruction: " << inst.name << endl;
+    cout << "Opcode: " << inst.instr.opcode << endl;
+    cout << "RS: " << inst.instr.rs << endl;
+    cout << "RT: " << inst.instr.rt << endl;
+    cout << "RD: " << inst.instr.rd << endl;
+    cout << "IMM: " << inst.instr.imm << endl;
+}
+
+
+void Pipeline::Hazards(void) {
+
+    // The instruction in the decode stage has registers which need to be checked for dependencies
+    int rsBusy = busyRegs[stages[_ID].instr.rs];
+    int rtBusy = busyRegs[stages[_ID].instr.rt];
+    int rdBusy = busyRegs[stages[_ID].instr.rd];
+    
+    // Check if any of the registers are in use
+    if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
+        printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
+        
+        // Stall the pipeline until the busiest register is free
+
+        // Assume RS at first
+        int maxBusy = rsBusy;
+        if (rtBusy > maxBusy) {
+            maxBusy = rtBusy;
+            // If RT is busier than RS, set maxBusy to RT
+            // Now check if RD is busier than RT
+            if (rdBusy > maxBusy) {
+                maxBusy = rdBusy;
+            }
+        }
+        else if(rdBusy > maxBusy) {
+            maxBusy = rdBusy;
+        }
+        stall(maxBusy);
+    } 
+
+}
+
+
+

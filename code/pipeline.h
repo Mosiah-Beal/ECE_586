@@ -29,6 +29,8 @@ class Pipeline {
         Pipeline();
         ~Pipeline();
 
+        void initNOPs(); // Initialize NOPs in stages
+
         std::vector<instruction> stages;    // Holds instructions in each stage
         std::map<int, int> busyRegs;        // Holds register values in use (stall cycles needed)
         Instructions instructionSet;        // Initialize instruction set
@@ -50,7 +52,6 @@ class Pipeline {
         
 
         // Pipeline control
-        int getOpcode(int bin);         // get the opcode from the binary instruction
         void stall(int cycles);         // Insert stall cycles
         void flush(void);               // Flush pipeline after misprediction
         
@@ -61,6 +62,8 @@ class Pipeline {
         void moveStages(int bin);       // Move instructions to next stage
         int checkHalt(int bin);         // Determine if we have hit a halt instruction
         void run(instruction &inst);    // Run the pipeline (one instruction at a time for now)
+        int getOpcode(int bin);         // get the opcode from the binary instruction
+        void printFields(instruction &inst); // Print the fields of the instruction
 
     private:
         void parseInstruction(instruction &inst);

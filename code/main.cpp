@@ -25,12 +25,12 @@ using namespace std;
 void testing(string bin);
 void showBitFields(string instruction);
 string makeBin(string hex);
+void listOpcodes(void);
 
 int main (int argc, char* argv[]) {
-    // Initialize objects
-    // Decoder decoder;
-    // Status status;
+    // Initialize the pipeline
     Pipeline pipeline;
+    vector<string> fileImage;
 
     // Error checking for command line arguments
     if (argc < 2) {
@@ -48,22 +48,66 @@ int main (int argc, char* argv[]) {
         return 1;
     }
 
-    string nxtInstrStr; // raw value from trace file
-    while (getline(traceFile, nxtInstrStr)) {
-        cout << "Next instruction: " << nxtInstrStr << endl;
-        // showBitFields(nxtInstrStr); // show bit fields of instruction (for debugging
-        // cout << endl;
+    // Read each line of the trace file
+    string line;
+    while (getline(traceFile, line)) {
 
-        int nxtInstr = stoi(nxtInstrStr, 0, 16); // convert to int for parsing
-
-        pipeline.moveStages(nxtInstr); // move stages in pipeline
-        // End if HALT instruction is found
-        if (pipeline.checkHalt(nxtInstr) == 0) {
-            break;
+        // skip line if it is empty
+        if (line.empty()) {
+            continue;
         }
+
+        // cout << "Not empty" << endl;
+
+        // strip out leading 0x if present
+        if (line.substr(0, 2) == "0x") {
+            line = line.substr(2);
+            // cout << "Stripped 0x" << endl;
+        }
+
+        // skip line if it is non-hexadecimal
+        if (line.find_first_not_of("0123456789ABCDEF") != string::npos) {
+            continue;
+        }
+
+        // cout << "Hexadecimal" << endl;
+
+        // cout << "Line: " << line << endl;
+        fileImage.push_back(line);
     }
 
+    // print each line of the trace file
+    for (int i = 0; i < (int) fileImage.size(); i++) {
+        //cout << fileImage.at(i) << endl;
+
+        int nxtInstr = stoi(fileImage.at(i), 0, 16); // convert to int for parsing
+
+        // show the opcode of the instruction added using the friendly name
+        string opcodeName = pipeline.instructionSet.getInstruction(pipeline.getOpcode(nxtInstr)).name;
+        cout << "Instruction [" << i << "]: " << fileImage.at(i) << " (" << opcodeName << ")" << endl;
+        // showBitFields(fileImage.at(i)); // show bit fields of instruction (for debugging)
+        
+
+
+    }
+
+    cout << endl;
+
+
+    string nxtInstrStr; // raw value from trace file
+    int instrIndex = 0; // index of instruction in file
+    int nxtInstr; // integer value of instruction
+    // Loop through each instruction in the trace file until HALT is found
+    do {
+        int nxtInstr = stoi(fileImage.at(instrIndex++), 0, 16); // convert to int for parsing
+        // showBitFields(fileImage.at(instrIndex-1)); // show bit fields of instruction (for debugging)
+        cout << "[Main]: " << instrIndex-1 << endl;
+        pipeline.moveStages(nxtInstr); // move stages in pipeline
+    }
+    while(pipeline.checkHalt(nxtInstr));
+
     pipeline.status.printReport();
+    // listOpcodes();
     return 0;
 }
 
@@ -99,14 +143,6 @@ void showBitFields(string instruction) {
     string rd = instructionBinary.substr(16, 5);
     string imm = instructionBinary.substr(16, 16);
 
-    // make it known if the imm value has a leading 1
-    if (imm.at(0) == '1') {
-        cout << "[main] Immediate value is negative" << endl;
-    }
-
-    // Show the instruction in binary
-    // cout << "Binary instruction:" << endl;
-
     // Show bit fields of instruction as strings
     // cout << "Opcode: " << opcode << endl;
     // cout << "RS: " << rs << endl;
@@ -114,26 +150,33 @@ void showBitFields(string instruction) {
     // cout << "RD: " << rd << endl;
     // cout << "Immediate: " << imm << endl;
 
+    // make it known if the imm value has a leading 1
+    if (imm.at(0) == '1') {
+        // cout << "[main] Immediate value is negative" << endl;
+    }
+
+    // Show the instruction in binary
+    // cout << "Binary instruction:" << endl;
+
+    int opcodeInt = stoi(opcode, 0, 2);
+    int rsInt = stoi(rs, 0, 2);
+    int rtInt = stoi(rt, 0, 2);
+    int rdInt = stoi(rd, 0, 2);
+    int immInt = stoi(imm, 0, 2);
+
     // show them as integers
-    // cout << "Opcode: " << stoi(opcode, 0, 2) << endl;
-    // cout << "RS: " << stoi(rs, 0, 2) << endl;
-    // cout << "RT: " << stoi(rt, 0, 2) << endl;
-    // cout << "RD: " << stoi(rd, 0, 2) << endl;
-    // cout << "Immediate: " << stoi(imm, 0, 2) << endl;
+    // cout << "Opcode: " << opcodeInt << endl;
+    cout << "RS: " << rsInt << endl;
+    cout << "RT: " << rtInt << endl;
+    cout << "RD: " << rdInt << endl;
+    cout << "Immediate: " << immInt << endl;
 
     // cout << "Integer instruction: " << endl;
     int instr = stoi(instruction, 0, 16);
+    instr += 0;
     
-    // show the integer value and the bit fields
-    // cout << "Instruction: " << instr << endl;
-    // cout << "Opcode: " << (instr >> 26) << endl;
-    // cout << "RS: " << ((instr >> 21) & 0x1F) << endl;
-    // cout << "RT: " << ((instr >> 16) & 0x1F) << endl;
-    // cout << "RD: " << ((instr >> 11) & 0x1F) << endl;
-    // cout << "Immediate: " << (instr & 0xFFFF) << endl; 
-
-    testing(imm);
-
+    // testing(imm);
+    cout << endl;
 }
 
 
@@ -233,4 +276,28 @@ void testing(string bin) {
     cout << "Signed int: " << signedInt << endl;
     cout << "2's complement: " << Complement_2s << endl;
     
+}
+
+
+void listOpcodes(void) {
+    // List of opcodes as hex values
+    cout << "ADD: 0x00" << endl;
+    cout << "SUB: 0x02" << endl;
+    cout << "MUL: 0x04" << endl;
+    cout << "OR: 0x06" << endl;
+    cout << "AND: 0x08" << endl;
+    cout << "XOR: 0x0A" << endl;
+    cout << "LDW: 0x0C" << endl;
+    cout << "STW: 0x0D" << endl;
+    cout << "ADDI: 0x01" << endl;
+    cout << "SUBI: 0x03" << endl;
+    cout << "MULI: 0x05" << endl;
+    cout << "ORI: 0x07" << endl;
+    cout << "ANDI: 0x09" << endl;
+    cout << "XORI: 0x0B" << endl;
+    cout << "BEQ: 0x0F" << endl;
+    cout << "BZ: 0x0E" << endl;
+    cout << "JR: 0x10" << endl;
+    cout << "HALT: 0x11" << endl;
+
 }
