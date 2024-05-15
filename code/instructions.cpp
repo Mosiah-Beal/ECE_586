@@ -77,6 +77,7 @@ void Instructions::setInstruction(std::string instrName, int opcode, int type, b
     inst.name = instrName;
     inst.type = type;
     inst.addressMode = addressMode;
+    inst.instr = InstrInfo();
 
     instructionSet[opcode] = inst;
 }

@@ -63,24 +63,28 @@ void Pipeline::decrBusyRegs(void) {
  */
 void Pipeline::moveStages(int line) {
 
+    printFields(stages[4]); // Print the instruction that was in the WB stage (pulled from MEM last cycle
     WB(stages[4]); // Writeback the instruction waiting in this stage (pulled from MEM last cycle)
     stages[4] = stages[3]; // Pull instruction from MEM to WB
     //cout << "WB: " << stages[4].name << endl;
 
-    MEM(stages[3]); // Memory operation 
+    printFields(stages[3]); // Print the instruction that was in the MEM stage (pulled from EX last cycle
+    stages[3] = *MEM(stages[3]); // Memory operation 
     stages[3] = stages[2]; // Pull instruction from EX to MEM
     //cout << "MEM: " << stages[3].name << endl;
 
-    EX(stages[2]); // Execute instruction
+    printFields(stages[2]); // Print the instruction that was in the EX stage (pulled from ID last cycle
+    stages[2] = *EX(stages[2]); // Execute instruction
     stages[2] = stages[1]; // Pull instruction from ID to EX
     //cout << "EX: " << stages[2].name << endl;
     
+    printFields(stages[1]); // Print the instruction that was in the ID stage (pulled from IF last cycle
     ID(stages[1]); // Decode instruction
     stages[1] = stages[0]; // Pull instruction from IF to ID
     //cout << "ID: " << stages[1].name << endl;
     
-    // call IF to fill IF stage
-    IF(line);
+    printFields(stages[0]); // Print the instruction that was in the IF stage
+    stages[0] = *IF(line);   // call IF to fill IF stage
     //cout << "IF: " << stages[0].name << endl << endl;
     cout << endl;
 }
@@ -118,238 +122,271 @@ int Pipeline::getOpcode(int trace) {
  * @brief Fetch instruction from memory
  * 
  */
-void Pipeline::IF(int inputBin) {
+instruction* Pipeline::IF(int inputBin) {
     int opcode = getOpcode(inputBin); // get the opcode from the line
-    instruction inst = instructionSet.getInstruction(opcode);   // Fill the metadata for the instruction
-    inst.binInstr = inputBin;   // store binary representation of instruction
-    stages[_IF] = inst; // store instruction in IF stage
-
+    instruction* inst = new instruction(instructionSet.getInstruction(opcode));   // Fill the metadata for the instruction
+    inst->binInstr = inputBin;   // store binary representation of instruction
+    stages[_IF] = *inst; // store instruction in IF stage
+    return inst;
 }
 
-void Pipeline::parseInstruction(instruction &inst) {
-    if (inst.addressMode == 0) { // Immediate addressing
-        inst.instr.opcode = getOpcode(inst.binInstr);
-        inst.instr.rs = (inst.binInstr & 0x3E00000) >> 21;
-        inst.instr.rt = (inst.binInstr & 0x1F0000) >> 16;
-        inst.instr.rd = 0; // No destination register for immediate addressing
-        inst.instr.imm = inst.binInstr & 0xFFFF;
+instruction* Pipeline::parseInstruction(instruction &instHeap) {
 
-        // Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
-        if (inst.instr.imm & 0x8000) {
-            inst.instr.imm = ~inst.instr.imm + 1;
+    // make a persistent copy of the instruction
+    instruction* inst = new instruction(instHeap);
+
+    if (inst->addressMode == 0) { // Immediate addressing
+        inst->instr.opcode = getOpcode(inst->binInstr);
+        inst->instr.rs = (inst->binInstr & 0x3E00000) >> 21;
+        inst->instr.rt = (inst->binInstr & 0x1F0000) >> 16;
+        inst->instr.rd = 0; // No destination register for immediate addressing
+        inst->instr.imm = inst->binInstr & 0xFFFF;
+
+        // Check if the immediate value is negative-> If so, invert the bits and add 1 to get 2s complement
+        if (inst->instr.imm & 0x8000) {
+            inst->instr.imm = ~inst->instr.imm + 1;
         }
 
         #ifdef DEBUG
-        printf("%s R%d, R%d, #%d\n", inst.name.c_str(), inst.instr.rt, inst.instr.rs, inst.instr.imm);
+        printf("%s R%d, R%d, #%d\n", inst->name->c_str(), inst->instr->rt, inst->instr->rs, inst->instr->imm);
         #endif
     } else { // Register addressing
-        inst.instr.opcode = getOpcode(inst.binInstr);
-        inst.instr.rs = (inst.binInstr & 0x03E00000) >> 21;
-        inst.instr.rt = (inst.binInstr & 0x001F0000) >> 16;
-        inst.instr.rd = (inst.binInstr & 0x0000F800) >> 11;
-        inst.instr.imm = 0; // No immediate value for register addressing
+        inst->instr.opcode = getOpcode(inst->binInstr);
+        inst->instr.rs = (inst->binInstr & 0x03E00000) >> 21;
+        inst->instr.rt = (inst->binInstr & 0x001F0000) >> 16;
+        inst->instr.rd = (inst->binInstr & 0x0000F800) >> 11;
+        inst->instr.imm = 0; // No immediate value for register addressing
 
         #ifdef DEBUG
-        printf("%s R%d, R%d, R%d\n", inst.name.c_str(), inst.instr.rd, inst.instr.rs, inst.instr.rt);
+        printf("%s R%d, R%d, R%d\n", inst->name->c_str(), inst->instr->rd, inst->instr->rs, inst->instr->rt);
         #endif
     }
 
     // Sanity check if any of the registers are out of bounds
     int sanityCheck = 0;
-    if(inst.instr.rs > 31) {
-        cout << "Error: Register RS: " << inst.instr.rs << " out of bounds" << endl;
-        // inst.name = "NOP";
+    if(inst->instr.rs > 31) {
+        cout << "Error: Register RS: " << inst->instr.rs << " out of bounds" << endl;
+        // inst->name = "NOP";
         // exit(1);
         sanityCheck += 1;
     }
-    if(inst.instr.rt > 31) {
-        cout << "Error: Register RT: " << inst.instr.rt << " out of bounds" << endl;
-        // inst.name = "NOP";
+    if(inst->instr.rt > 31) {
+        cout << "Error: Register RT: " << inst->instr.rt << " out of bounds" << endl;
+        // inst->name = "NOP";
         // exit(1);
         sanityCheck += 2;
     }
-    if(inst.instr.rd > 31) {
-        cout << "Error: Register RD: " << inst.instr.rd << " out of bounds" << endl;
-        // inst.name = "NOP";
+    if(inst->instr.rd > 31) {
+        cout << "Error: Register RD: " << inst->instr.rd << " out of bounds" << endl;
+        // inst->name = "NOP";
         // exit(1);
         sanityCheck += 4;
     }
-    if(inst.instr.imm > 65535) {
-        cout << "Error: Immediate value " << inst.instr.imm << " out of bounds" << endl;
-        // inst.name = "NOP";
+    if(inst->instr.imm > 65535) {
+        cout << "Error: Immediate value " << inst->instr.imm << " out of bounds" << endl;
+        // inst->name = "NOP";
         // exit(1);
         sanityCheck += 8;
     }
 
     if(sanityCheck > 0){
-        printFields(inst);
+        printFields(*inst);
         cout << endl;
-        return;
+        return inst;
     }
 
     // Otherwise
-    cout << "[ID]: Instruction: " << inst.name << endl;
-    stages[_ID] = inst;
-
+    std::cout << "[ID]: Instruction: " << inst->name << endl;
+    stages[_ID] = *inst;
+    // printFields(inst);
+    
+    return inst;
 }
 
-void Pipeline::executeInstruction(instruction &inst) {
+instruction* Pipeline::executeInstruction(instruction &instHeap) {
+
+    instruction* inst = new instruction(instHeap);
     // Check for hazards
     // Hazards();    
-    switch(inst.instr.opcode) {
+
+    printFields(*inst);
+    switch(inst->instr.opcode) {
         // REGISTER
         case 0: // ADD
-            ALUresult = status.registers[inst.instr.rs] + status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] + status.registers[inst->instr.rt];
             break;
         case 2: // SUB
-            ALUresult = status.registers[inst.instr.rs] - status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] - status.registers[inst->instr.rt];
             break;
         case 4: // MUL
-            ALUresult = status.registers[inst.instr.rs] * status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] * status.registers[inst->instr.rt];
             break;
         case 6: // OR
-            ALUresult = status.registers[inst.instr.rs] | status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] | status.registers[inst->instr.rt];
             break;
         case 8: // AND
-            ALUresult = status.registers[inst.instr.rs] & status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] & status.registers[inst->instr.rt];
             break;
         case 10: // XOR
-            ALUresult = status.registers[inst.instr.rs] ^ status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rs] ^ status.registers[inst->instr.rt];
             break;
         
         // IMMEDIATE
         case 1: // ADDI
-            ALUresult = status.registers[inst.instr.rs] + inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] + inst->instr.imm;
             break;
         case 3: // SUBI
-            ALUresult = status.registers[inst.instr.rs] - inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] - inst->instr.imm;
             break;
         case 5: // MULI
-            ALUresult = status.registers[inst.instr.rs] * inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] * inst->instr.imm;
             break;
         case 7: // ORI
-            ALUresult = status.registers[inst.instr.rs] | inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] | inst->instr.imm;
             break;
         case 9: // ANDI
-            ALUresult = status.registers[inst.instr.rs] & inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] & inst->instr.imm;
             break;
         case 11: // XORI
-            ALUresult = status.registers[inst.instr.rs] ^ inst.instr.imm;
+            ALUresult = status.registers[inst->instr.rs] ^ inst->instr.imm;
             break;
         case 12: // LDW
-            ALUresult = status.memory[inst.instr.imm];
+            ALUresult = status.memory[inst->instr.imm];
             break;
         case 13: // STW
-            ALUresult = status.registers[inst.instr.rt];
+            ALUresult = status.registers[inst->instr.rt];
             break;
         
         // CONTROL FLOW
         case 14: // BZ
-            if (status.registers[inst.instr.rt] == 0) {
-                status.PC += inst.instr.imm * 4;
+            if (status.registers[inst->instr.rt] == 0) {
+                status.PC += inst->instr.imm * 4;
             }
             break;
         case 15: // BEQ
-            if (status.registers[inst.instr.rt] == status.registers[inst.instr.rs]) {
-                status.PC += inst.instr.imm * 4;
+            if (status.registers[inst->instr.rt] == status.registers[inst->instr.rs]) {
+                status.PC += inst->instr.imm * 4;
             }
             break;
         case 16: // JR
-            status.PC += status.registers[inst.instr.rt] * 4;
+            status.PC += status.registers[inst->instr.rt] * 4;
             break;
         default:
             cout << "Error: Invalid opcode" << endl;
-            inst.name = "NOP";
-            printFields(inst);
+            inst->name = "NOP";
+            // printFields(inst);
             break;
     }
 
-    cout << "[EX]: Instruction: " << inst.name << endl;
+    cout << "[EX]: Instruction: " << inst->name << endl;
+    cout << "[EX]: ALUresult: " << ALUresult << endl;
+    return inst;
 }
 
-void Pipeline::ID(instruction &inst) {
+instruction* Pipeline::ID(instruction &instHeap) {
+    instruction* inst = new instruction(instHeap);
+    
     // check for NOP (initialization)
-    if (inst.name == "NOP") {
+    if (inst->name == "NOP") {
         cout << "[ID]: NOP" << endl;
-        return;
+        // printFields(inst);
+        return inst;
     }
     
-    parseInstruction(inst);
+    parseInstruction(*inst);
 
     #ifdef DEBUG
         // Display the fields of the instruction
-        cout << "\t\tOpcode: " << inst.instr.opcode << endl;
-        cout << "\t\tRS: " << inst.instr.rs << endl;
-        cout << "\t\tRT: " << inst.instr.rt << endl;
-        if(inst.addressMode == 0) {
-            cout << "\t\tIMM: " << inst.instr.imm << endl;
+        cout << "\t\tOpcode: " << inst->instr.opcode << endl;
+        cout << "\t\tRS: " << inst->instr.rs << endl;
+        cout << "\t\tRT: " << inst->instr.rt << endl;
+        if(inst->addressMode == 0) {
+            cout << "\t\tIMM: " << inst->instr.imm << endl;
         } else {
-            cout << "\t\tRD: " << inst.instr.rd << endl;
+            cout << "\t\tRD: " << inst->instr.rd << endl;
         }
     #endif
 
+    // Update status
+
+    return inst;
 }
 
-void Pipeline::EX(instruction &inst) {
+instruction* Pipeline::EX(instruction &instHeap) {
+
+    instruction* inst = new instruction(instHeap);
+
     // Check for nop
-    if (inst.name == "NOP") {
+    if (inst->name == "NOP") {
         cout << "[EX]: NOP" << endl;
-        return;
+        return inst;
     }
     
     // Check for hazards
     // Hazards();
 
     // Execute the instruction
-    executeInstruction(inst);
+    executeInstruction(*inst);
 
     // Update status
-    // cout << "Type: " << inst.type << endl;
-    status.typeExecd[inst.type]++; // update number of times instruction type was executed
+    // cout << "Type: " << inst->type << endl;
+    status.typeExecd[inst->type]++; // update number of times instruction type was executed
     status.PC += 4; // increment program counter
 
     #ifdef DEBUG
     printf("(%d) ", status.PC);
     #endif
 
+    return inst;
 }
 
-void Pipeline::MEM(instruction &inst) {
+instruction* Pipeline::MEM(instruction &instHeap) {
+    instruction* inst = new instruction(instHeap);
+
     // Check for nop
-    if (inst.name == "NOP") {
+    if (inst->name == "NOP") {
         cout << "[MEM]: NOP" << endl;
-        return;
+        return inst;
     }
 
-    printFields(inst);
+    // printFields(inst);
 
-    if (inst.instr.opcode == 12) { // LDW
+    if (inst->instr.opcode == 12) { // LDW
         cout << "[MEM] MDR: " << MDR << endl;
         MDR = ALUresult;
     }
 
-    if (inst.addressMode == 0) { // Immediate addressing
-        status.registers[inst.instr.rt] = ALUresult;
+    if (inst->addressMode == 0) { // Immediate addressing
+        status.registers[inst->instr.rt] = ALUresult;
     } else { // Register addressing
         cout << "[MEM] ALUresult: " << ALUresult << endl;
-        status.registers[inst.instr.rd] = ALUresult;
+        status.registers[inst->instr.rd] = ALUresult;
     }
 
-    cout << "[MEM] Instruction: " << inst.name << endl;
+    cout << "[MEM] Instruction: " << inst->name << endl;
+    cout << "[MEM] Register: " << inst->instr.rt << " Value: " << status.registers[inst->instr.rt] << endl;
+
+    return inst;
 }
 
-void Pipeline::WB(instruction &inst) {
+void Pipeline::WB(instruction &instHeap) {
+
+    instruction* inst = new instruction(instHeap);
+
     // Check for nop
-    if (inst.name == "NOP") {
+    if (inst->name == "NOP") {
         cout << "[WB]: NOP" << endl;
         return;
     }
 
-    if (inst.instr.opcode == 12) {
-        status.memory[inst.instr.rt] = status.memory[MDR];
+    if (inst->instr.opcode == 12) {
+        status.memory[inst->instr.rt] = status.memory[MDR];
     }
 
-    cout << "[WB] Instruction: " << inst.name << endl;
+    cout << "[WB] Instruction: " << inst->name << endl;
+
+    // Deallocate memory for instruction pointer now that it is no longer needed
+    delete inst;
 }
 
 /**

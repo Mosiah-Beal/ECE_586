@@ -20,7 +20,7 @@
 
 
 class Pipeline {
-    private:
+    protected:
             int numStalls;    // Number of stalls inserted
             int ALUresult;    // Result of ALU operation
             int MDR;  // Memory Destination Register (load memory MEM stage)
@@ -38,11 +38,11 @@ class Pipeline {
 
     private:
         // Stage functions
-        void IF(int inputBin);          // Instruction Fetch
-        void ID(instruction &inst);     // Decode
-        void EX(instruction &inst);     // Execute
-        void MEM(instruction &inst);    // Memory
-        void WB(instruction &inst);     // Writeback
+        instruction* IF(int inputBin);          // Instruction Fetch
+        instruction* ID(instruction &inst);     // Decode
+        instruction* EX(instruction &inst);     // Execute
+        instruction* MEM(instruction &inst);    // Memory
+        void WB(instruction &inst);             // Writeback
 
         // Helper functions
         void printStages(void);
@@ -66,8 +66,8 @@ class Pipeline {
         void printFields(instruction &inst); // Print the fields of the instruction
 
     private:
-        void parseInstruction(instruction &inst);
-        void executeInstruction(instruction &inst);
+        instruction* parseInstruction(instruction &inst);
+        instruction* executeInstruction(instruction &inst);
         void Hazards(void);            // Check for data hazards
         void printBinary(int n);       // Print binary representation of int
         

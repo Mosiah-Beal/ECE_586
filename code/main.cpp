@@ -96,7 +96,8 @@ int main (int argc, char* argv[]) {
 
     string nxtInstrStr; // raw value from trace file
     int instrIndex = 0; // index of instruction in file
-    int nxtInstr; // integer value of instruction
+    int nxtInstr = 0; // integer value of instruction
+
     // Loop through each instruction in the trace file until HALT is found
     do {
         int nxtInstr = stoi(fileImage.at(instrIndex++), 0, 16); // convert to int for parsing
@@ -104,7 +105,7 @@ int main (int argc, char* argv[]) {
         cout << "[Main]: " << instrIndex-1 << endl;
         pipeline.moveStages(nxtInstr); // move stages in pipeline
     }
-    while(pipeline.checkHalt(nxtInstr));
+    while(pipeline.checkHalt(nxtInstr) && instrIndex < (int) fileImage.size());
 
     pipeline.status.printReport();
     // listOpcodes();
