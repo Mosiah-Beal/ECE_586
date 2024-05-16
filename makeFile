@@ -2,28 +2,24 @@
 CC = g++
 
 # Compiler flags
-CFLAGS = -Wall -Wextra -std=c++11
+CFLAGS = -Wall -std=c++11
 
 # Source files
-SRCS = main.cpp file1.cpp file2.cpp
+SRCS = $(wildcard *.cpp)
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
 
 # Executable name
-TARGET = myprogram
+EXEC = mips
 
-# Default target
-all: $(TARGET)
+all: $(EXEC)
 
-# Compile source files into object files
+$(EXEC): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Link object files into executable
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
-
-# Clean up object files and executable
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(EXEC)
