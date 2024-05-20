@@ -26,7 +26,7 @@ typedef struct {
 
 // Used to parse instruction and update type counter
 typedef struct {
-    Bitmap bitmap;    // Struct for decoded instruction
+    Bitmap* bitmap;    // Struct for decoded instruction
     int bin_bitmap ;       // Binary representation of instruction
     std::string name;   // for print/debugging
     bool addressMode;   // 0 = immediate, 1 = register
@@ -87,6 +87,7 @@ private:
     void setInstruction(std::string instrName, int opcode, int type, bool addressMode);
     int getOpcode(int bin);         // Get the opcode from the binary instruction
     instr_metadata getInstruction(int opcode); // Get instruction by opcode
+    void internalPipeMove(int sourceIndex, int destIndex); // Move instruction from source to dest stage
 
 public:
     //constructor + deconstructor

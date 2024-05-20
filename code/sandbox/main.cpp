@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
 
     // Loop through each instruction in the trace file until HALT is found
     do {
+        std::cout << "[Main]: " << instrIndex << std::endl;
         nxtInstr = std::stoi(fileImage.at(instrIndex++), 0, 16); // convert to int for parsing
         pipeline.moveStages(nxtInstr); // move stages in pipeline
     } while (pipeline.checkHalt(nxtInstr) && instrIndex < (int) fileImage.size());
