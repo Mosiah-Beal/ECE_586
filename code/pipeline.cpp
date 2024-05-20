@@ -3,6 +3,7 @@
 #include "pipeline.h"
 #include "instructions.h"
 #include <iostream>
+#include <vector>
 
 Pipeline::Pipeline() {
     numStalls = 0;      // Initialize number of stalls to 0
@@ -12,6 +13,21 @@ Pipeline::Pipeline() {
 
 Pipeline::~Pipeline() {
 }
+<<<<<<< Updated upstream
+=======
+void Pipeline::initNOPs(void) {
+    for (int i = 0; i < 5; i++) {
+        stages[i].name = "NOP";
+        stages[i].instr.opcode = 18;
+        stages[i].instr.rs = 0;
+        stages[i].instr.rt = 0;
+        stages[i].instr.rd = 0;
+        stages[i].instr.imm = 0;
+    }
+}
+
+
+>>>>>>> Stashed changes
 
 /**
  * @brief Initialize busy registers to 0
@@ -40,10 +56,29 @@ void Pipeline::decrBusyRegs(void) {
  * 
  */
 void Pipeline::moveStages(int line) {
+<<<<<<< Updated upstream
     stages[4] = stages[3]; // Move MEM to WB
     stages[3] = stages[2]; // Move EX to MEM
     stages[2] = stages[1]; // Move ID to EX
     stages[1] = stages[0]; // Move IF to ID
+=======
+
+    WB(stages[4]); // Writeback the instruction waiting in this stage (pulled from MEM last cycle)
+    stages[4].assign(stages[3]); // Pull instruction from MEM to WB
+    //cout << "WB: " << stages[4].name << endl;
+
+    MEM(stages[3]); // Memory operation 
+    stages[3].assign(stages[2]); // Pull instruction from EX to MEM
+    //cout << "MEM: " << stages[3].name << endl;
+
+    EX(stages[2]); // Execute instruction
+    stages[2].assign(stages[1]); // Pull instruction from ID to EX
+    //cout << "EX: " << stages[2].name << endl;
+    
+    ID(stages[1]); // Decode instruction
+    stages[1].assign(stages[0]); // Pull instruction from IF to ID
+    //cout << "ID: " << stages[1].name << endl;
+>>>>>>> Stashed changes
     
     // call IF to fill IF stage
     IF(line);
@@ -110,15 +145,56 @@ void Pipeline::ID(int inputBin, instruction &inst) {
         printf("%s R%d, R%d, R%d\n", inst.name.c_str(), inst.instr.rd, inst.instr.rs, inst.instr.rt);
         #endif
     }
+<<<<<<< Updated upstream
    
+=======
+
+    // Sanity check if any of the registers are out of bounds
+    int sanityCheck = 0;
+    if(inst.instr.rs > 31) {
+        cout << "Error: Register RS: " << inst.instr.rs << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 1;
+    }
+    if(inst.instr.rt > 31) {
+        cout << "Error: Register RT: " << inst.instr.rt << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 2;
+    }
+    if(inst.instr.rd > 31) {
+        cout << "Error: Register RD: " << inst.instr.rd << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 4;
+    }
+    if(inst.instr.imm > 65535) {
+        cout << "Error: Immediate value " << inst.instr.imm << " out of bounds" << endl;
+        // inst.name = "NOP";
+        // exit(1);
+        sanityCheck += 8;
+    }
+
+    if(sanityCheck > 0){
+        printFields(inst);
+        cout << endl;
+        return;
+    }
+
+    // Otherwise
+    cout << "[ID]: Instruction: " << inst.name << endl;
+    stages[_ID] = inst;
+    printFields(inst);
+>>>>>>> Stashed changes
 }
 
 void Pipeline::EX(instruction &inst, Status &status) {
     switch(inst.instr.opcode) {
         // REGISTER
         case 0: // ADD
-            ALUresult = status.registers[inst.instr.rs] + status.registers[inst.instr.rt];
-            break;
+            ALUresult = status.registers[inst.instr.rs] + status.registers[inst.instr.rt]; 
+	 break;
         case 2: // SUB
             ALUresult = status.registers[inst.instr.rs] - status.registers[inst.instr.rt];
             break;
@@ -170,7 +246,16 @@ void Pipeline::EX(instruction &inst, Status &status) {
             }
             break;
         case 16: // JR
+<<<<<<< Updated upstream
             status.PC += status.registers[inst.instr.rs] * 4;
+=======
+            status.PC += status.registers[inst.instr.rt] * 4;
+            break;
+        default:
+            cout << "Error: Invalid opcode" << endl;
+            inst.name += " Error" ;
+            printFields(inst);
+>>>>>>> Stashed changes
             break;
     }
 }
