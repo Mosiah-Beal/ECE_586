@@ -42,8 +42,19 @@ Pipeline::Pipeline() {
     // Initialize registers
     registers.resize(32);
 
+    // Set all registers to 0
+    for (int i = 0; i < 32; i++) {
+        registers[i] = 0;
+    }
+
     // Initialize typeExecd
     typeExecd.resize(4);
+
+    // Set all types to 0
+    for (int i = 0; i < 4; i++) {
+        typeExecd[i] = 0;
+    }
+
     
 }
 
@@ -77,10 +88,16 @@ void Pipeline::ID(instr_metadata &metadata) {
         cout << "[ID]: NOP" << endl;
         return;
     }
-    
+
+    // Decode the instruction and fill the metadata
     metadata = parseInstruction(metadata);
-    stages[_ID] = metadata;
+
+    cout << "[ID] Instruction: " << metadata.name << endl;
     printFields(metadata);
+
+    // Put the filled metadata back into the stage
+    stages[_ID] = metadata;
+    
    #ifdef DEBUG
         // Display the fields of the instruction
         cout << "\t\tOpcode: " << metadata.bitmap->opcode << endl;
@@ -103,6 +120,9 @@ void Pipeline::EX(instr_metadata &metadata) {
         return;
     }
     
+    cout << "[EX] Instruction: " << metadata.name << endl;
+    printFields(metadata);
+
     // Check for hazards
     // Hazards();
 
@@ -118,7 +138,7 @@ void Pipeline::EX(instr_metadata &metadata) {
     printf("(%d) ", PC);
     #endif
     stages[_EX] = metadata;
-    printFields(metadata);
+
     
 }
 
@@ -130,22 +150,26 @@ void Pipeline::MEM(instr_metadata &metadata) {
         return;
     }
 
+    // If it is not a NOP, print the fields
+    cout << "[MEM] Instruction: " << metadata.name << endl;
     printFields(metadata);
 
     if (metadata.bitmap->opcode == 12) { // LDW
-        cout << "[MEM] MDR: " << MDR << endl;
         MDR = ALUresult;
+        cout << "\t[MEM] MDR: " << MDR << endl;
     }
 
     if (metadata.addressMode == 0) { // Immediate addressing
-        registers[metadata.bitmap->rt] = ALUresult;
-    } else { // Register addressing
-        cout << "[MEM] ALUresult: " << ALUresult << endl;
-        registers[metadata.bitmap->rd] = ALUresult;
-    }
 
-    cout << "[MEM] Instruction: " << metadata.name << endl;
-    printFields(metadata);
+        cout << "\t[MEM] ALUresult: " << ALUresult << endl;
+        registers[metadata.bitmap->rt] = ALUresult;
+        cout << "\t[MEM] RT: " << metadata.bitmap->rt << " = " << registers[metadata.bitmap->rt] << endl;
+    } 
+    else { // Register addressing
+        cout << "\t[MEM] ALUresult: " << ALUresult << endl;
+        registers[metadata.bitmap->rd] = ALUresult;
+        cout << "\t[MEM] RD: " << metadata.bitmap->rd << " = " << registers[metadata.bitmap->rd] << endl;
+    }
 }
 
 //Write Back
@@ -156,11 +180,15 @@ void Pipeline::WB(instr_metadata &metadata) {
         return;
     }
 
+    cout << "[WB] Instruction: " << metadata.name << endl;
+
     if (metadata.bitmap->opcode == 12) {
+        cout << "\t[WB] MDR: " << MDR << endl;
         memory[metadata.bitmap->rt] = memory[MDR];
+        cout << "\t[WB] Memory[" << metadata.bitmap->rt << "]: " << memory[metadata.bitmap->rt] << endl;
     }
 
-    cout << "[WB] Instruction: " << metadata.name << endl;
+
 }
 
 /*-------------------------------------------------------------------------------------------- 
@@ -325,7 +353,6 @@ printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadat
     }
 
     // Otherwise
-    cout << "[ID]: Instruction: " << metadata.name << endl;
     return metadata;
 }
 
@@ -401,8 +428,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             break;
     }
 
-    cout << "[EX]: Instruction: " << metadata.name << endl;
-    printf("ALUresult: %d\n", ALUresult); 
+    printf("\t[EX]: ALUresult: %d\n", ALUresult); 
     return metadata;
 }
 
@@ -547,20 +573,16 @@ SECTION 5 User functions
 void Pipeline::moveStages(int line) {
 
     WB(stages[_WB]);// Writeback the instruction waiting in this stage (pulled from MEM last cycle 
-    stages[4] = stages[3]; // Pull instruction from MEM to WB
-    //cout << "WB: " << stages[4].name << endl;
-
+    stages[_WB] = stages[_MEM]; // Pull instruction from MEM to WB
+    
     MEM(stages[_MEM]); // Memory operation
-    stages[3] = stages[2]; // Pull instruction from EX to MEM
-    //cout << "MEM: " << stages[3].name << endl;
-
+    stages[_MEM] = stages[_EX]; // Pull instruction from EX to MEM
+    
     EX(stages[_EX]); // Execute instruction
-    stages[2] = stages[1]; // Pull instruction from ID to EX
-    //cout << "EX: " << stages[2].name << endl;
+    stages[_EX] = stages[_ID]; // Pull instruction from ID to EX
     
     ID(stages[_ID]); // Decode instruction
-    stages[1] = stages[0]; // Pull instruction from IF to ID
-    //cout << "ID: " << stages[1].name << endl;
+    stages[_ID] = stages[_IF]; // Pull instruction from IF to ID
     
     // call IF to fill IF stage
     IF(line);
@@ -597,28 +619,12 @@ void Pipeline::initNOPs(void) {
 
         // Allocate memory for the bitmap of instruction
         stages[i].bitmap = new Bitmap;
-
-        // print the pointer to the bitmap
-        // cout << "Stage " << i << ": " << stages[i].bitmap << endl;
-
-        // check if the bitmap is null
-        if (stages[i].bitmap == NULL) {
-            cout << "Bitmap is null" << endl;
-        }
-
-        // cout << "Stage " << i << ": " << stages[i].name << endl;
         stages[i].bitmap->opcode = 18;
-
-        // cout << "Stage " << i << ": " << stages[i].bitmap->opcode << endl;
         stages[i].bitmap->rs = 0;
-
-        // cout << "Stage " << i << ": " << stages[i].bitmap->rs << endl;
         stages[i].bitmap->rt = 0;
-        // cout << "Stage " << i << ": " << stages[i].bitmap->rt << endl;
         stages[i].bitmap->rd = 0;
-        // cout << "Stage " << i << ": " << stages[i].bitmap->rd << endl;
         stages[i].bitmap->imm = 0;
-        // cout << "Stage " << i << ": " << stages[i].bitmap->imm << endl;
     }
+
 }
 
