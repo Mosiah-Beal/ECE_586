@@ -21,14 +21,29 @@ using namespace std;
 //this initializes the Pipeline class
 Pipeline::Pipeline() {
 
-    cout << "Pipeline object created" << endl;
+    // cout << "Pipeline object created" << endl;
     defineInstSet();
     numStalls = 0;      // Initialize number of stalls to 0
     stages.resize(5);   // 5 stages in pipeline
 
-    cout << "Initializing registers and NOPS" << endl;
+    // cout << "Initializing registers and NOPS" << endl;
     initBusyRegs();     // Initialize busy registers
     initNOPs();         // Initialize NOPs in stages
+
+    // Initialize the members
+    ALUresult = 0;
+    MDR = 0;
+    PC = 0;
+    
+
+    // clear memory
+    memory.clear();
+
+    // Initialize registers
+    registers.resize(32);
+
+    // Initialize typeExecd
+    typeExecd.resize(4);
     
 }
 
@@ -49,17 +64,10 @@ SECTION 1 Stage functions
 // Instruction Fetch
 void Pipeline::IF(int inputBin) {
     int opcode = getOpcode(inputBin); // get the opcode from the line
-    // cout << "[IF]: opcode = " << opcode << endl;
     instr_metadata metadata = getInstruction(opcode);   // Fill the metadata for the instruction
     metadata.bin_bitmap = inputBin;   // store binary representation of instruction
-    // metadata.bitmap = new Bitmap; // Allocate memory for the bitmap of instruction
-
-
     printf("bitmap = %x\n", inputBin);
     stages[_IF] = metadata; // store instruction in IF stage
-
-    // cout << "[IF]: Instruction: ";
-    // printFields(metadata);
 }
 
 //Instruction Decode
@@ -161,21 +169,21 @@ SECTION 2 Helper functions
 
 // Print Statistics  
 void Pipeline::printReport() {
-    std::cout << std::endl << "Arithmetic instructions executed: " << typeExecd[0] << std::endl;
-    std::cout << "Logical instructions executed: " << typeExecd[1] << std::endl;
-    std::cout << "Memory access instructions executed: " << typeExecd[2] << std::endl;
-    std::cout << "Control flow instructions executed: " << typeExecd[3] << std::endl;
+    cout << std::endl << "Arithmetic instructions executed: " << typeExecd[0] << endl;
+    cout << "Logical instructions executed: " << typeExecd[1] << endl;
+    cout << "Memory access instructions executed: " << typeExecd[2] << endl;
+    cout << "Control flow instructions executed: " << typeExecd[3] << endl;
 
-    std::cout << "Program Counter: " << PC << std::endl;
+    cout << "Program Counter: " << PC << endl;
     
     for (int i = 0; i < 32; i++) {
-        std::cout << "R" << i << ": " << registers[i] << std::endl;
+        cout << "R" << i << ": " << registers[i] << endl;
     }
 
     for (auto const& x : memory) {
-        std::cout << "Memory[" << x.first << "]: " << x.second << std::endl;
+        cout << "Memory[" << x.first << "]: " << x.second << endl;
     }
-    std::cout << std::endl;
+    cout << endl;
 
 }
 
@@ -513,8 +521,6 @@ int Pipeline::getOpcode(int trace) {
  */
 instr_metadata Pipeline::getInstruction(int opcode) {
     if (instructionSet.count(opcode) > 0) {
-        // cout << "[DEBUG - getInstruction]: Opcode found in instruction set" << endl;
-        // printFields(instructionSet.at(opcode));
         return instructionSet.at(opcode);
 	        
     } else {
@@ -540,35 +546,24 @@ SECTION 5 User functions
 
 void Pipeline::moveStages(int line) {
 
-    // cout << "WB: " << stages[_WB].name << endl;
     WB(stages[_WB]);// Writeback the instruction waiting in this stage (pulled from MEM last cycle 
-    
-    // cout << "Internal Pipe Move: MEM -> WB" << endl;
-    // internalPipeMove(_MEM, _WB); // Pull instruction from MEM to WB
-    
-    // cout << "[DEBUG] WB: " << stages[_WB].name << endl;
-    // printFields(stages[_WB]);
     stages[4] = stages[3]; // Pull instruction from MEM to WB
     //cout << "WB: " << stages[4].name << endl;
 
     MEM(stages[_MEM]); // Memory operation
-    // internalPipeMove(_EX, _MEM); // Pull instruction from EX to MEM
     stages[3] = stages[2]; // Pull instruction from EX to MEM
     //cout << "MEM: " << stages[3].name << endl;
 
     EX(stages[_EX]); // Execute instruction
-    // internalPipeMove(_ID, _EX); // Pull instruction from ID to EX
     stages[2] = stages[1]; // Pull instruction from ID to EX
     //cout << "EX: " << stages[2].name << endl;
     
     ID(stages[_ID]); // Decode instruction
-    // internalPipeMove(_IF, _ID); // Pull instruction from IF to ID
     stages[1] = stages[0]; // Pull instruction from IF to ID
     //cout << "ID: " << stages[1].name << endl;
     
     // call IF to fill IF stage
     IF(line);
-    //cout << "IF: " << stages[0].name << endl << endl;
     cout << endl;
 }
 

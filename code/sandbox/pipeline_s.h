@@ -49,8 +49,10 @@ private:
     int ALUresult;    // Result of ALU operation
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
-    int registers[32];  // Registers
-    int typeExecd[4];   // Number of times each instruction type was executed
+
+
+    std::vector<int> registers;  // Registers
+    std::vector<int> typeExecd;   // Number of times each instruction type was executed
     
     //maps
  	
