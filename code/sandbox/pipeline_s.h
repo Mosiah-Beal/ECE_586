@@ -31,6 +31,7 @@ typedef struct {
     std::string name;   // for print/debugging
     bool addressMode;   // 0 = immediate, 1 = register
     int type;
+    int len;
     /**
      * Type of instruction:
      * 0 = arithmetic
@@ -49,7 +50,7 @@ private:
     int ALUresult;    // Result of ALU operation
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
-
+    bool stallFlag;
 
     std::vector<int> registers;  // Registers
     std::vector<int> typeExecd;   // Number of times each instruction type was executed
@@ -72,25 +73,27 @@ private:
     void printMDR();
     void printReport(); // Print the number of times each instruction type was executed
     void printFields(instr_metadata &metadata); // Print the fields of the instruction
-
+    instr_metadata* copyFields(instr_metadata &source); 
 
     // Pipeline control
-    void stall(int cycles);         // Insert stall cycles
+    void stall();         // Insert stall cycles
     void flush();                   // Flush pipeline after misprediction
 
     // Control functions
     void initBusyRegs();    // Initialize busy registers to 0
     void decrBusyRegs();    // Decrement busy registers by 1 (at end of cycle)
+    void setBusyRegs(instr_metadata &metadata);
     instr_metadata parseInstruction(instr_metadata &metadata);
     instr_metadata  executeInstruction(instr_metadata &metadata);
     void Hazards();            // Check for data hazards
     void printBinary(int n);   // Print binary representation of int
     void defineInstSet();      // Define the instruction set
-    void setInstruction(std::string instrName, int opcode, int type, bool addressMode);
+    void setInstruction(std::string instrName, int opcode, int type, bool addressMode, int len);
     int getOpcode(int bin);         // Get the opcode from the binary instruction
     instr_metadata getInstruction(int opcode); // Get instruction by opcode
     void internalPipeMove(int sourceIndex, int destIndex); // Move instruction from source to dest stage
 
+   
 public:
     //constructor + deconstructor
     Pipeline();

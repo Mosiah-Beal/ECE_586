@@ -55,7 +55,7 @@ Pipeline::Pipeline() {
         typeExecd[i] = 0;
     }
 
-    
+   stallFlag = false;
 }
 
 //deconstructor (public)
@@ -74,11 +74,17 @@ SECTION 1 Stage functions
 
 // Instruction Fetch
 void Pipeline::IF(int inputBin) {
-    int opcode = getOpcode(inputBin); // get the opcode from the line
-    instr_metadata metadata = getInstruction(opcode);   // Fill the metadata for the instruction
-    metadata.bin_bitmap = inputBin;   // store binary representation of instruction
+    if(stallFlag) {
+    stages[_IF] = stages[_IF];
+    } 
+    else {
+    int opcode = getOpcode(inputBin); // get the opcode from the line 
+    instr_metadata instrMap = getInstruction(opcode);   // Fill the metadata for the instruction 
+    instr_metadata *metadata = copyFields(instrMap);
+    metadata->bin_bitmap = inputBin;   // store binary representation of instruction
     printf("bitmap = %x\n", inputBin);
-    stages[_IF] = metadata; // store instruction in IF stage
+    stages[_IF] = *metadata; // store instruction in IF stage
+   }
 }
 
 //Instruction Decode
@@ -91,9 +97,14 @@ void Pipeline::ID(instr_metadata &metadata) {
 
     // Decode the instruction and fill the metadata
     metadata = parseInstruction(metadata);
-
     cout << "[ID] Instruction: " << metadata.name << endl;
     printFields(metadata);
+   
+    //check hazards
+    Hazards();
+    
+    //set busy regs
+    setBusyRegs(metadata);
 
     // Put the filled metadata back into the stage
     stages[_ID] = metadata;
@@ -227,17 +238,33 @@ void Pipeline::printReport() {
  }
 
 
+//copy elements of instr_metadata struct
+instr_metadata* Pipeline::copyFields(instr_metadata &source) {
+
+instr_metadata *destination =  new instr_metadata;
+
+destination->bitmap = new Bitmap;
+destination->bin_bitmap = source.bin_bitmap;
+destination->name = source.name;
+destination->addressMode = source.addressMode;
+destination->type = source.type;
+destination->len = source.len;
+
+return destination;
+
+}
+
+
+
+
 /*-------------------------------------------------------------------------------------------- 
 SECTION 3 Pipeline control
 --------------------------------------------------------------------------------------------*/
 
 // Insert stall
-void Pipeline::stall(int cycles) {
-
-    for(int i = 0; i < cycles; i++) {
-        //TODO: Insert NOP(s) into stages
+void Pipeline::stall(void) {
+	stages[_EX].name = "NOP";
         numStalls++;
-    }
 }
 
 // Flush pipeline after misprediction
@@ -297,6 +324,29 @@ void Pipeline::decrBusyRegs(void) {
         }
     }
 }
+
+//set busy registers for hazard identification
+void Pipeline::setBusyRegs(instr_metadata &metadata) {
+
+if(stallFlag){
+return;
+}
+
+    if(metadata.addressMode) {
+	busyRegs[metadata.bitmap->rs] = metadata.len;
+	busyRegs[metadata.bitmap->rt] = metadata.len;
+	busyRegs[metadata.bitmap->rd] = metadata.len;
+    }
+
+    else {
+	busyRegs[metadata.bitmap->rs] = metadata.len;
+	busyRegs[metadata.bitmap->rs] = metadata.len;
+    }	
+
+
+}
+
+
 
 //Decode Instruction
 instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
@@ -358,8 +408,7 @@ printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadat
 
 //execute instruction
 instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
-    // Check for hazards
-    // Hazards();    
+  
     switch(metadata.bitmap->opcode) {
         // REGISTER
         case 0: // ADD
@@ -443,24 +492,16 @@ void Pipeline::Hazards(void) {
     // Check if any of the registers are in use
     if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
         printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
-        
+       	stallFlag = true; 
         // Stall the pipeline until the busiest register is free
-
-        // Assume RS at first
-        int maxBusy = rsBusy;
-        if (rtBusy > maxBusy) {
-            maxBusy = rtBusy;
-            // If RT is busier than RS, set maxBusy to RT
-            // Now check if RD is busier than RT
-            if (rdBusy > maxBusy) {
-                maxBusy = rdBusy;
-            }
-        }
-        else if(rdBusy > maxBusy) {
-            maxBusy = rdBusy;
-        }
-        stall(maxBusy);
+        stall();
     } 
+    
+    else {
+	
+	stallFlag = false;
+    
+    }
 
 }
 
@@ -491,25 +532,25 @@ void Pipeline::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
-    setInstruction("ADD", 0, 0, 1); // ADD
-    setInstruction("SUB", 2, 0, 1); // SUB
-    setInstruction("MUL", 4, 0, 1); // MUL
-    setInstruction("OR", 6, 1, 1); // OR
-    setInstruction("AND", 8, 1, 1); // AND
-    setInstruction("XOR", 10, 1, 1); // XOR
+    setInstruction("ADD", 0, 0, 1, 4); // ADD
+    setInstruction("SUB", 2, 0, 1, 4); // SUB
+    setInstruction("MUL", 4, 0, 1, 4); // MUL
+    setInstruction("OR", 6, 1, 1, 4); // OR
+    setInstruction("AND", 8, 1, 1, 4); // AND
+    setInstruction("XOR", 10, 1, 1, 4); // XOR
 
-    setInstruction("LDW", 12, 2, 0); // LDW
-    setInstruction("STW", 13, 2, 0); // STW
-    setInstruction("ADDI", 1, 0, 0); // ADDI
-    setInstruction("SUBI", 3, 0, 0); // SUBI
-    setInstruction("MULI", 5, 0, 0); // MULI
-    setInstruction("ORI", 7, 1, 0); // ORI
-    setInstruction("ANDI", 9, 1, 0); // ANDI
-    setInstruction("XORI", 11, 1, 0); // XORI
-    setInstruction("BEQ", 15, 3, 0); // BEQ
-    setInstruction("BZ", 14, 3, 0); // BZ
-    setInstruction("JR", 16, 3, 0); // JR
-    setInstruction("HALT", 17, 3, 0); // HALT
+    setInstruction("LDW", 12, 2, 0, 5); // LDW
+    setInstruction("STW", 13, 2, 0, 4); // STW
+    setInstruction("ADDI", 1, 0, 0, 4); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 4); // SUBI
+    setInstruction("MULI", 5, 0, 0, 4); // MULI
+    setInstruction("ORI", 7, 1, 0, 4); // ORI
+    setInstruction("ANDI", 9, 1, 0, 4); // ANDI
+    setInstruction("XORI", 11, 1, 0, 4); // XORI
+    setInstruction("BEQ", 15, 3, 0, 3); // BEQ
+    setInstruction("BZ", 14, 3, 0, 3); // BZ
+    setInstruction("JR", 16, 3, 0, 3); // JR
+    setInstruction("HALT", 17, 3, 0, 1); // HALT
 }
 
 
@@ -521,11 +562,12 @@ void Pipeline::defineInstSet() {
  * @param type 0 = arithmetic, 1 = logical, 2 = memory access, 3 = control flow
  * @param addressMode 0 = immediate, 1 = register
  */
-void Pipeline::setInstruction(std::string instrName, int opcode, int type, bool addressMode) {
+void Pipeline::setInstruction(std::string instrName, int opcode, int type, bool addressMode, int len) {
     instr_metadata* metadata = new instr_metadata;
     metadata->name = instrName;
     metadata->type = type;
     metadata->addressMode = addressMode;
+    metadata->len = len;
     // cout << "[DEBUG - setInstruction]: Opcode: " << opcode << endl;
     metadata->bitmap = new Bitmap;
     instructionSet[opcode] = *metadata;
@@ -571,22 +613,29 @@ SECTION 5 User functions
 
 
 void Pipeline::moveStages(int line) {
-
-    WB(stages[_WB]);// Writeback the instruction waiting in this stage (pulled from MEM last cycle 
+   
     stages[_WB] = stages[_MEM]; // Pull instruction from MEM to WB
-    
-    MEM(stages[_MEM]); // Memory operation
+    WB(stages[_WB]);   
+
     stages[_MEM] = stages[_EX]; // Pull instruction from EX to MEM
-    
-    EX(stages[_EX]); // Execute instruction
+    MEM(stages[_MEM]);
+
     stages[_EX] = stages[_ID]; // Pull instruction from ID to EX
+    EX(stages[_EX]); // Execute instruction
     
-    ID(stages[_ID]); // Decode instruction
     stages[_ID] = stages[_IF]; // Pull instruction from IF to ID
-    
+    ID(stages[_ID]); // Decode instruction
+   
     // call IF to fill IF stage
+    if(!stallFlag) {
     IF(line);
     cout << endl;
+    decrBusyRegs();
+    return;
+   }
+
+moveStages(line);
+ 
 }
 
 // checks to see if a halt instruction is found
