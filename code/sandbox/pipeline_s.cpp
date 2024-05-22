@@ -257,10 +257,15 @@ void Pipeline::printReport() {
     cout << "\tInstruction " << metadata.instructionNumber << ": " << metadata.name << endl;
     cout << "\tOpcode: " << metadata.bitmap->opcode << endl;
 
+    // Don't print the fields if it is a NOP or an error
+    if(metadata.name == "NOP" || metadata.name == "ERROR") {
+        return;
+    }
+
     // Print the bitmap fields and what the registers are
-    cout << "\tRS: " << metadata.bitmap->rs << " = " << registers[metadata.bitmap->rs] << " (R" << metadata.bitmap->rs << ")" << endl;
-    cout << "\tRT: " << metadata.bitmap->rt << " = " << registers[metadata.bitmap->rt] << " (R" << metadata.bitmap->rt << ")" << endl;
-    cout << "\tRD: " << metadata.bitmap->rd << " = " << registers[metadata.bitmap->rd] << " (R" << metadata.bitmap->rd << ")" << endl;
+    cout << "\tRS: R" << metadata.bitmap->rs << " = " << registers[metadata.bitmap->rs] << " (R" << metadata.bitmap->rs << ")" << endl;
+    cout << "\tRT: R" << metadata.bitmap->rt << " = " << registers[metadata.bitmap->rt] << " (R" << metadata.bitmap->rt << ")" << endl;
+    cout << "\tRD: R" << metadata.bitmap->rd << " = " << registers[metadata.bitmap->rd] << " (R" << metadata.bitmap->rd << ")" << endl;
     cout << "\tIMM: " << metadata.bitmap->imm << endl;
  }
 
@@ -271,6 +276,10 @@ SECTION 3 Pipeline control
 
 // Insert stall
 void Pipeline::stall(int cycles) {
+
+    instr_metadata* metadata = new instr_metadata;
+    metadata->name = "NOP";
+
 
     for(int i = 0; i < cycles; i++) {
         //TODO: Insert NOP(s) into stages
@@ -643,8 +652,14 @@ void Pipeline::moveStages(int line) {
     ID(stages[_ID]); // Decode instruction
     
     // call IF to fill IF stage
-    IF(line);
-    cout << endl;
+
+
+    if(!stallCondition) {
+        IF(line);
+        cout << endl;
+        return;    
+    }
+    moveStages(line);
 }
 
 // checks to see if a halt instruction is found

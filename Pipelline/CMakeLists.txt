@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(Pipelline LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+file(GLOB_RECURSE PROJECT_SOURCES code/*)
+
+
+
+add_executable(Pipelline ${PROJECT_SOURCES})
+
+include(GNUInstallDirs)
+install(TARGETS Pipelline
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
