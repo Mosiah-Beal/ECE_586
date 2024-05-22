@@ -341,14 +341,11 @@ return;
 }
 
     if(metadata.addressMode) {
-	busyRegs[metadata.bitmap->rs] = metadata.len;
-	busyRegs[metadata.bitmap->rt] = metadata.len;
 	busyRegs[metadata.bitmap->rd] = metadata.len;
     }
 
     else {
-	busyRegs[metadata.bitmap->rs] = metadata.len;
-	busyRegs[metadata.bitmap->rs] = metadata.len;
+	busyRegs[metadata.bitmap->rt] = metadata.len;
     }	
 
 
@@ -493,14 +490,21 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
 void Pipeline::Hazards(void) {
 
  // The instruction in the decode stage has registers which need to be checked for dependencies
-    int rsBusy = busyRegs[stages[_ID].bitmap->rs];
-    int rtBusy = busyRegs[stages[_ID].bitmap->rt];
-    int rdBusy = busyRegs[stages[_ID].bitmap->rd];
-   
+
+    int rtBusy = 0;
+    int rdBusy = 0;
+
+    if(!stages[_ID].addressMode){
+     rtBusy = busyRegs[stages[_ID].bitmap->rt];
+    }
+    else{
+    rdBusy = busyRegs[stages[_ID].bitmap->rd];
+    }
+
     printBusyRegs(); 
     // Check if any of the registers are in use
-    if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
-        printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
+    if (rtBusy > 0 || rdBusy > 0) {
+        printf("RT: %d, RD: %d\n", rtBusy, rdBusy);
        	stallFlag = true; 
         // Stall the pipeline until the busiest register is free
         stall();

@@ -107,6 +107,7 @@ public:
     void initNOPs(); // Initialize NOPs in stages
 
     //public maps + vectors
+    std::vector<int, string> instructionMemory; 
     std::vector<instr_metadata> stages;    // Holds instructions in each stage
     std::map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
 };
