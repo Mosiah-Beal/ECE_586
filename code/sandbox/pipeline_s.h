@@ -7,6 +7,8 @@
 #include <iostream>
 #include <algorithm>
 
+// using namespace std;
+
 // Define constants for the stages
 #define _IF 0
 #define _ID 1
@@ -60,8 +62,12 @@ private:
     
     //maps
  	
-    map<int, int> memory; // Memory <address, value>
-    map<int, instr_metadata> instructionSet; // Instruction set
+public:
+    std::map<int, int> memory; // Memory <address, value>
+    std::map<int, instr_metadata> instructionSet; // Instruction set
+    std::map<int, int> instructionType; // instruction <opcode, number of times executed>
+
+private:
 
     // Stage functions
     void IF(int inputBin);          // Instruction Fetch
@@ -111,8 +117,8 @@ public:
     void initNOPs(); // Initialize NOPs in stages
 
     //public maps + vectors
-    map<int, string> instructionMemory; 
-    vector<instr_metadata> stages;    // Holds instructions in each stage
-    map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
+    std::map<int, std::string> instructionMemory; 
+    std::vector<instr_metadata> stages;    // Holds instructions in each stage
+    std::map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
 };
 #endif /* PIPELINE_H */

@@ -55,6 +55,11 @@ Pipeline::Pipeline() {
         typeExecd[i] = 0;
     }
 
+    // Initialize each instruction in the instruction set to 0 in the type map
+    for (auto const& x : instructionSet) {
+        instructionType[x.first] = 0;
+    }
+
    stallFlag = false;
 }
 
@@ -213,16 +218,26 @@ void Pipeline::printReport() {
     cout << std::endl << "Arithmetic instructions executed: " << typeExecd[0] << endl;
     cout << "Logical instructions executed: " << typeExecd[1] << endl;
     cout << "Memory access instructions executed: " << typeExecd[2] << endl;
-    cout << "Control flow instructions executed: " << typeExecd[3] << endl;
+    cout << "Control flow instructions executed: " << typeExecd[3] << endl << endl;
 
-    cout << "Program Counter: " << PC << endl;
+    cout << "Program Counter: " << PC << endl << endl;
     
     for (int i = 0; i < 32; i++) {
         cout << "R" << i << ": " << registers[i] << endl;
     }
 
+    cout << endl;
+
     for (auto const& x : memory) {
         cout << "Memory[" << x.first << "]: " << x.second << endl;
+    }
+
+    cout << endl;
+    cout << "Number of stalls: " << numStalls << endl << endl;
+
+    cout << "Instruction type count: " << endl;
+    for (auto const& x : instructionType) {
+        cout << "Opcode: " << instructionSet[x.first].name << " Count: " << x.second << endl;
     }
     cout << endl;
 
@@ -419,6 +434,9 @@ printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadat
 //execute instruction
 instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
   
+    // increment the instruction type counter
+    instructionType[metadata.bitmap->opcode]++;
+
     switch(metadata.bitmap->opcode) {
         // REGISTER
         case 0: // ADD
