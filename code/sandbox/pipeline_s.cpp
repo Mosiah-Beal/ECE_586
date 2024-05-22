@@ -254,9 +254,15 @@ return destination;
 
 }
 
+void Pipeline::printBusyRegs(void) {
 
+for(int i = 0; i<32; i++) {
+	if(busyRegs[i] > 0){
+	cout << "Register[" << i << "] Busy for:" << busyRegs[i] << endl;
+	}
+   }
 
-
+}
 /*-------------------------------------------------------------------------------------------- 
 SECTION 3 Pipeline control
 --------------------------------------------------------------------------------------------*/
@@ -488,7 +494,8 @@ void Pipeline::Hazards(void) {
     int rsBusy = busyRegs[stages[_ID].bitmap->rs];
     int rtBusy = busyRegs[stages[_ID].bitmap->rt];
     int rdBusy = busyRegs[stages[_ID].bitmap->rd];
-    
+   
+    printBusyRegs(); 
     // Check if any of the registers are in use
     if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
         printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
@@ -633,7 +640,7 @@ void Pipeline::moveStages(int line) {
     decrBusyRegs();
     return;
    }
-
+decrBusyRegs();
 moveStages(line);
  
 }
@@ -665,7 +672,6 @@ void Pipeline::initNOPs(void) {
     for (int i = 0; i < 5; i++) {
         // cout << "Initializing NOP in stage " << i << endl;
         stages[i].name = "NOP";
-
         // Allocate memory for the bitmap of instruction
         stages[i].bitmap = new Bitmap;
         stages[i].bitmap->opcode = 18;
