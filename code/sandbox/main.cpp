@@ -30,16 +30,15 @@ int main(int argc, char* argv[]) {
 
     // Read each line of the trace file
     std::string line;
+    int i = 0;
     while (std::getline(traceFile, line)) {
         // skip line if it is empty
         if (line.empty()) {
             continue;
         }
         fileImage.push_back(line);
+        pipeline.instructionMemory[4*i++] = line;
     }
-
-    int instrIndex = 0; // index of instruction in file
-    int nxtInstr = 0; // next instruction to be processed
 
     // Loop through each instruction in the trace file until HALT is found
     pipeline.run();
