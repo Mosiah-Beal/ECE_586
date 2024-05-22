@@ -688,9 +688,15 @@ int Pipeline::checkHalt(int bin) {
     }
 }
 
-void Pipeline::run(instr_metadata &metadata) {
+void Pipeline::run(void) {
+    int nxtInstr = 0; // next instruction to be processed
 
-// TODO: implement functionality 
+    // Increment through instructions in instruction memory until HALT is found
+do {
+    cout << "[PC]: " << PC << std::endl;
+    nxtInstr = std::stoi(instructionMemory[PC], 0, 16); // convert to int for parsing
+    moveStages(nxtInstr); // move stages in pipeline
+    } while (checkHalt(nxtInstr) && PC < (int) instructionMemory.size());
 
 }
 

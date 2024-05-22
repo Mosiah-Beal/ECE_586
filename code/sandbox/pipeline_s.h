@@ -112,7 +112,7 @@ public:
     //user functions
     void moveStages(int bin);       // Move instructions to next stage
     int checkHalt(int bin);         // Determine if we have hit a halt instruction
-    void run(instr_metadata &metadata);   // Run the pipeline (one instruction at a time for now)
+    void run(void);   // Run the pipeline (one instruction at a time for now)
     void printExecutionReport(); // print public method
     void initNOPs(); // Initialize NOPs in stages
 
