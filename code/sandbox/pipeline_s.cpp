@@ -351,6 +351,11 @@ return;
 
 }
 
+//set instruction memory
+void Pipeline::setInstructionMemory(string line) {
+
+}
+
 
 
 //Decode Instruction

@@ -14,6 +14,9 @@
 #define _MEM 3
 #define _WB 4
 
+
+using namespace std;
+
 // Holds all register and immediate values for a given instruction
 // Depending on format, some fields will be unused
 typedef struct {
@@ -28,7 +31,7 @@ typedef struct {
 typedef struct {
     Bitmap* bitmap;    // Struct for decoded instruction
     int bin_bitmap ;       // Binary representation of instruction
-    std::string name;   // for print/debugging
+    string name;   // for print/debugging
     bool addressMode;   // 0 = immediate, 1 = register
     int type;
     int len;
@@ -52,13 +55,13 @@ private:
     int PC;   // Program Counter
     bool stallFlag;
 
-    std::vector<int> registers;  // Registers
-    std::vector<int> typeExecd;   // Number of times each instruction type was executed
+    vector<int> registers;  // Registers
+    vector<int> typeExecd;   // Number of times each instruction type was executed
     
     //maps
  	
-    std::map<int, int> memory; // Memory <address, value>
-    std::map<int, instr_metadata> instructionSet; // Instruction set
+    map<int, int> memory; // Memory <address, value>
+    map<int, instr_metadata> instructionSet; // Instruction set
 
     // Stage functions
     void IF(int inputBin);          // Instruction Fetch
@@ -83,6 +86,7 @@ private:
     void initBusyRegs();    // Initialize busy registers to 0
     void decrBusyRegs();    // Decrement busy registers by 1 (at end of cycle)
     void setBusyRegs(instr_metadata &metadata);
+    void setInstructionMemory(string line);
     instr_metadata parseInstruction(instr_metadata &metadata);
     instr_metadata  executeInstruction(instr_metadata &metadata);
     void Hazards();            // Check for data hazards
@@ -107,8 +111,8 @@ public:
     void initNOPs(); // Initialize NOPs in stages
 
     //public maps + vectors
-    std::vector<int, string> instructionMemory; 
-    std::vector<instr_metadata> stages;    // Holds instructions in each stage
-    std::map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
+    map<int, string> instructionMemory; 
+    vector<instr_metadata> stages;    // Holds instructions in each stage
+    map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
 };
 #endif /* PIPELINE_H */
