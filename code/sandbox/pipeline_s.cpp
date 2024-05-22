@@ -128,6 +128,8 @@ void Pipeline::EX(instr_metadata &metadata) {
     // Check for nop
     if (metadata.name == "NOP") {
         cout << "[EX]: NOP" << endl;
+	typeExecd[metadata.type]++; // update number of times instruction type was executed
+	PC += 4; // increment program counter
         return;
     }
     
@@ -258,7 +260,7 @@ void Pipeline::printBusyRegs(void) {
 
 for(int i = 0; i<32; i++) {
 	if(busyRegs[i] > 0){
-	cout << "Register[" << i << "] Busy for:" << busyRegs[i] << endl;
+	cout << "Register[" << i << "] Busy for: " << busyRegs[i] << endl;
 	}
    }
 
@@ -626,10 +628,13 @@ void Pipeline::moveStages(int line) {
 
     stages[_MEM] = stages[_EX]; // Pull instruction from EX to MEM
     MEM(stages[_MEM]);
-
+    if(stallFlag) {
+    stages[_EX].name = "NOP";
+} 
+else {
     stages[_EX] = stages[_ID]; // Pull instruction from ID to EX
-    EX(stages[_EX]); // Execute instruction
-    
+}
+    EX(stages[_EX]); // Execute instruction}
     stages[_ID] = stages[_IF]; // Pull instruction from IF to ID
     ID(stages[_ID]); // Decode instruction
    
