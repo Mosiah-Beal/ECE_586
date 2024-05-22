@@ -5,11 +5,9 @@ project(Pipelline LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB_RECURSE PROJECT_SOURCES code/*)
+file(GLOB_RECURSE SOURCES "./*")
 
-
-
-add_executable(Pipelline ${PROJECT_SOURCES})
+add_executable(Pipelline ${SOURCES})
 
 include(GNUInstallDirs)
 install(TARGETS Pipelline
