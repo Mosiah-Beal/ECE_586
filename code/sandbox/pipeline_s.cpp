@@ -133,8 +133,6 @@ void Pipeline::EX(instr_metadata &metadata) {
     // Check for nop
     if (metadata.name == "NOP") {
         cout << "[EX]: NOP" << endl;
-	typeExecd[metadata.type]++; // update number of times instruction type was executed
-	PC += 4; // increment program counter
         return;
     }
     
@@ -167,6 +165,11 @@ void Pipeline::MEM(instr_metadata &metadata) {
         cout << "[MEM]: NOP" << endl;
         return;
     }
+	
+    if(metadata.bitmap->opcode > 13) {
+	cout << "[MEM]: Flush" << endl;
+ 	return;
+     }
 
     // If it is not a NOP, print the fields
     cout << "[MEM] Instruction: " << metadata.name << endl;
@@ -175,10 +178,11 @@ void Pipeline::MEM(instr_metadata &metadata) {
     if (metadata.bitmap->opcode == 12) { // LDW
         MDR = ALUresult;
         cout << "\t[MEM] MDR: " << MDR << endl;
+	return;
     }
 
     if (metadata.addressMode == 0) { // Immediate addressing
-
+		
         cout << "\t[MEM] ALUresult: " << ALUresult << endl;
         registers[metadata.bitmap->rt] = ALUresult;
         cout << "\t[MEM] RT: " << metadata.bitmap->rt << " = " << registers[metadata.bitmap->rt] << endl;
@@ -197,6 +201,11 @@ void Pipeline::WB(instr_metadata &metadata) {
         cout << "[WB]: NOP" << endl;
         return;
     }
+ 
+      if(metadata.bitmap->opcode > 13) {
+	cout << "[WB]: Flush" << endl;
+ 	return;
+     }
 
     cout << "[WB] Instruction: " << metadata.name << endl;
 
@@ -248,9 +257,9 @@ void Pipeline::printReport() {
  void Pipeline::printFields(instr_metadata &metadata) {
     cout << "\tInstruction: " << metadata.name << endl;
     cout << "\tOpcode: " << metadata.bitmap->opcode << endl;
-    cout << "\tRS: " << metadata.bitmap->rs << endl;
-    cout << "\tRT: " << metadata.bitmap->rt << endl;
-    cout << "\tRD: " << metadata.bitmap->rd << endl;
+    cout << "\tRS: " << metadata.bitmap->rs << " value: " << registers[metadata.bitmap->rs] << endl;
+    cout << "\tRT: " << metadata.bitmap->rt << " value: " << registers[metadata.bitmap->rt]<< endl;
+    cout << "\tRD: " << metadata.bitmap->rd << " value: " << registers[metadata.bitmap->rd]<< endl;
     cout << "\tIMM: " << metadata.bitmap->imm << endl;
  }
 
@@ -381,7 +390,8 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
         metadata.bitmap->rt = (metadata.bin_bitmap & 0x1F0000) >> 16;
         metadata.bitmap->rd = 0; // No destination register for immediate addressing
         metadata.bitmap->imm = metadata.bin_bitmap & 0xFFFF;
-
+	
+	
 //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if (metadata.bitmap->imm & 0x8000) {
             metadata.bitmap->imm &= ~0x8000;    // Clear the sign bit
@@ -482,23 +492,29 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             ALUresult = memory[metadata.bitmap->imm];
             break;
         case 13: // STW
-            ALUresult = registers[metadata.bitmap->rt];
+	    cout << "\tSTW: rs = " << registers[metadata.bitmap->rs] << " imm = " << registers[metadata.bitmap->imm] << endl; 
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
             break;
         
         // CONTROL FLOW
         case 14: // BZ
-            if (registers[metadata.bitmap->rt] == 0) {
+	        cout << "\t\t\t\t\tBZ:" << registers[metadata.bitmap->rs] << endl;
+            if (registers[metadata.bitmap->rs] == 0) {
                 PC += metadata.bitmap->imm * 4;
+		cout << "\t\t\t\t\tBZ jump!" << endl;
             }
             break;
         case 15: // BEQ
+		cout << "\t\t\t\t\tBEQ: rt = " << registers[metadata.bitmap->rt] << " rs = " << registers[metadata.bitmap->rs] << endl; 
             if (registers[metadata.bitmap->rt] == registers[metadata.bitmap->rs]) {
                 PC += metadata.bitmap->imm * 4;
+		cout << "\t\t\t\t\tBEQ jump!" << endl;
             }
             break;
         case 16: // JR
-            PC += registers[metadata.bitmap->rt] * 4;
-            break;
+                PC = registers[metadata.bitmap->rs] * 4;
+		cout << "\t\t\t\t\tjump!" << endl;
+	   	 break;
         default:
             cout << "Error: Invalid opcode" << endl;
             metadata.name += " Error" ;
@@ -697,7 +713,7 @@ do {
     cout << "[PC]: " << PC << std::endl;
     nxtInstr = std::stoi(instructionMemory[PC], 0, 16); // convert to int for parsing
     moveStages(nxtInstr); // move stages in pipeline
-    } while (checkHalt(nxtInstr) && PC < (int) instructionMemory.size());
+    } while (checkHalt(nxtInstr));
 
 }
 
