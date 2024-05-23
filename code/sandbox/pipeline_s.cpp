@@ -384,7 +384,8 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
 
 //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if (metadata.bitmap->imm & 0x8000) {
-            metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
+            metadata.bitmap->imm &= ~0x8000;    // Clear the sign bit
+            metadata.bitmap->imm *= -1;
         }
 
        // #ifdef DEBUG

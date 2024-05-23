@@ -68,6 +68,7 @@ public:
     std::map<int, int> instructionType; // instruction <opcode, number of times executed>
 
 private:
+public:
 
     // Stage functions
     void IF(int inputBin);          // Instruction Fetch
@@ -94,7 +95,7 @@ private:
     void setBusyRegs(instr_metadata &metadata);
     void setInstructionMemory(string line);
     instr_metadata parseInstruction(instr_metadata &metadata);
-    instr_metadata  executeInstruction(instr_metadata &metadata);
+    instr_metadata executeInstruction(instr_metadata &metadata);
     void Hazards();            // Check for data hazards
     void printBinary(int n);   // Print binary representation of int
     void defineInstSet();      // Define the instruction set
