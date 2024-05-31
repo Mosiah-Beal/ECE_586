@@ -518,11 +518,11 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             break;
         
         case 12: // LDW //FIXME: Rs + imm
-            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm * 4;
             cout << "\t[EX]: R" << metadata.bitmap->rs << " = Memory[" << metadata.bitmap->imm << "]" << endl;
             break;
         case 13: // STW //FIXME: Rs + imm
-            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm * 4;
             cout << "\t[EX]: Memory[" << metadata.bitmap->imm << "] = R" << metadata.bitmap->rt << endl;
             break;
         
