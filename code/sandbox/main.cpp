@@ -40,13 +40,39 @@ int main(int argc, char* argv[]) {
 
     // Read each line of the trace file
     std::string line;
+    int i = 0;
     while (std::getline(traceFile, line)) {
         // skip line if it is empty
         if (line.empty()) {
             continue;
         }
+
+        // strip off the 0x (if it exists)
+        if (line.substr(0, 2) == "0x") {
+            line = line.substr(2);
+        }
+
+        // Take only the first 8 characters of the line (or up to the first space)
+        // line = line.substr(0, line.find(' '));
+
+        // skip line if it is non-hexadecimal
+        if (line.find_first_not_of("0123456789ABCDEFabcdef") != std::string::npos) {
+            continue;
+        }
+
+        // Add the line to the file image
         fileImage.push_back(line);
+        pipeline.instructionMemory[4*i++] = line;
     }
+
+    // print the instruction memory
+    for (auto const& x : pipeline.instructionMemory) {
+        std::cout << x.first << ": " << x.second << std::endl;
+    }
+
+    pipeline.run();
+    return 0;
+
 
     int instrIndex = 0; // index of instruction in file
     int nxtInstr = 0; // next instruction to be processed
@@ -55,10 +81,12 @@ int main(int argc, char* argv[]) {
     do {
         std::cout << "[Main]: " << instrIndex << std::endl;
         nxtInstr = std::stoi(fileImage.at(instrIndex++), 0, 16); // convert to int for parsing
+        
+
         pipeline.moveStages(nxtInstr); // move stages in pipeline
     } while (pipeline.checkHalt(nxtInstr) && instrIndex < (int) fileImage.size());
 
-    std::cout << "[Main]: HALT instruction found\n";
+    
 
     // Empty the pipeline of any remaining instructions
     for(int i = 0; i < 5; i++){

@@ -182,9 +182,23 @@ void Pipeline::MEM(instr_metadata &metadata) {
     cout << "[MEM] Instruction: " << metadata.name << endl;
     printFields(metadata);
 
-    if (metadata.bitmap->opcode == 12) { // LDW
-        MDR = ALUresult;
+    //Jumps (return)
+    if(metadata.bitmap->opcode > 13) {
+        return;
+    }
+
+    // LDW
+    if (metadata.bitmap->opcode == 12) { 
+        MDR = memory[ALUresult];
         cout << "\t[MEM] MDR: " << MDR << endl;
+        return;
+    }
+
+    // STW
+    if(metadata.bitmap->opcode == 13) { 
+        memory[ALUresult] = registers[metadata.bitmap->rt];
+        cout << "\t[MEM] Memory[" << ALUresult << "]: " << memory[ALUresult] << endl;
+        return;
     }
 
     if (metadata.addressMode == 0) { // Immediate addressing
@@ -215,11 +229,13 @@ void Pipeline::WB(instr_metadata &metadata) {
 
     cout << "[WB] Instruction: " << metadata.name << endl;
 
+    // Only LDW will reach this stage
     if (metadata.bitmap->opcode == 12) {
         cout << "\t[WB] MDR: " << MDR << endl;
-        memory[metadata.bitmap->rt] = memory[MDR];
+        registers[metadata.bitmap->rt] = MDR;
         cout << "\t[WB] Memory[" << metadata.bitmap->rt << "]: " << memory[metadata.bitmap->rt] << endl;
     }
+
 
 
 }
@@ -461,12 +477,12 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << "\t[EX]: R" << metadata.bitmap->rt << " = R" << metadata.bitmap->rs << " ^ " << metadata.bitmap->imm << endl;
             break;
         
-        case 12: // LDW
-            ALUresult = memory[metadata.bitmap->imm];
-            cout << "\t[EX]: R" << metadata.bitmap->rt << " = Memory[" << metadata.bitmap->imm << "]" << endl;
+        case 12: // LDW //FIXME: Rs + imm
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
+            cout << "\t[EX]: R" << metadata.bitmap->rs << " = Memory[" << metadata.bitmap->imm << "]" << endl;
             break;
-        case 13: // STW
-            ALUresult = registers[metadata.bitmap->rt];
+        case 13: // STW //FIXME: Rs + imm
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
             cout << "\t[EX]: Memory[" << metadata.bitmap->imm << "] = R" << metadata.bitmap->rt << endl;
             break;
         
@@ -673,10 +689,42 @@ int Pipeline::checkHalt(int bin) {
     }
 }
 
-void Pipeline::run(instr_metadata &metadata) {
+void Pipeline::run() {
 
-// TODO: implement functionality 
+    int instruction = stoi(instructionMemory[PC]); // should be initialized to 0
+    int mainIndex = 0;
+    int lastPC = 0;
+    // Move the instruction at the PC counter from the instruction memory to the IF stage
+    do{
+        std::cout << "[Main]: " << mainIndex++ << std::endl;
+        cout << "PC: " << PC << endl;
+        
+        // break if HALT instruction is found
+        if(!checkHalt(instruction)){
+            break;
+        }
 
+        if(mainIndex > 500) {
+            cout << "Error: PC exceeded instruction memory range" << endl;
+            break;
+        }
+
+        moveStages(instruction);
+        instruction = stoi(instructionMemory[PC], 0, 16); // convert to int for parsing
+
+        // Check if PC is incrementing
+        if((lastPC == PC) && mainIndex > 10) {
+            cout << "Error: PC is not incrementing" << endl;
+            break;
+        }
+        
+        lastPC = PC;
+
+    } while ((PC * 0.25) < (int) instructionMemory.size());   // Continue until HALT is found or PC exceeds the instruction memory range
+    std::cout << "[Main]: HALT instruction found\n";
+    
+    // stall 5 cycles to flush the pipeline
+    printExecutionReport();
 }
 
 //print statistics from private function 

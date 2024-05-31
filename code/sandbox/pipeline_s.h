@@ -52,6 +52,8 @@ private:
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
 
+    bool stallCondition;  // Flag to stall pipeline
+
     int instrFetched;   // Number of instructions fetched
 
 
@@ -59,9 +61,13 @@ private:
     std::vector<int> typeExecd;   // Number of times each instruction type was executed
     
     //maps
- 	
+ 	public:
     std::map<int, int> memory; // Memory <address, value>
-    std::map<int, instr_metadata> instructionSet; // Instruction set
+    std::map<int, instr_metadata> instructionSet;   // Instruction set
+    std::map<int, std::string> instructionMemory;   // Instruction memory <address, instruction>
+    std::map<int, int> opcodeHeatMap;               // <Opcode, number of times executed>
+
+    private:
 
     // Stage functions
     void IF(int inputBin);          // Instruction Fetch
@@ -103,8 +109,8 @@ public:
     //user functions
     void moveStages(int bin);       // Move instructions to next stage
     int checkHalt(int bin);         // Determine if we have hit a halt instruction
-    void run(instr_metadata &metadata);   // Run the pipeline (one instruction at a time for now)
-    void printExecutionReport(); // print public method
+    void run();                     // Run the pipeline (one instruction at a time for now)
+    void printExecutionReport();    // print public method
     void initNOPs(); // Initialize NOPs in stages
 
     //public maps + vectors
