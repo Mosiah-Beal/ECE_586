@@ -88,7 +88,7 @@ private:
 
 
     // Pipeline control
-    void stall(int cycles);         // Insert stall cycles
+    void stall();                   // Insert stall cycles
     void flush();                   // Flush pipeline after misprediction
 
     // Control functions
