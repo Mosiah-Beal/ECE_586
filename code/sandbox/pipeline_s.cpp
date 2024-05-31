@@ -150,8 +150,12 @@ void Pipeline::EX(instr_metadata &metadata) {
     // Hazards();
 
     // Execute the instruction
+    cout << "\t\t\t\t[PC]: " << PC << endl;
+    
     metadata =  executeInstruction(metadata);
-
+    
+    cout << "\t\t\t\t[PC]: " << PC << endl;
+    
     // Update status
     // cout << "Type: " << inst.type << endl;
     typeExecd[metadata.type]++; // update number of times instruction type was executed
