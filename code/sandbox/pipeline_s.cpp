@@ -151,9 +151,6 @@ void Pipeline::EX(instr_metadata &metadata) {
     cout << "[EX] Instruction: " << metadata.name << endl;
     printFields(metadata);
 
-    // Check for hazards
-    // Hazards();
-
     // Execute the instruction
     cout << "\t\t\t\t[PC]: " << PC << endl;
     
@@ -463,9 +460,7 @@ printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadat
 }
 
 //execute instruction
-instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
-    // Check for hazards
-    // Hazards();    
+instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {  
 
     switch(metadata.bitmap->opcode) {
         // REGISTER
@@ -569,10 +564,10 @@ void Pipeline::Hazards(void) {
     int rdBusy = 0;
 
     if(!stages[_ID].addressMode){
-     rtBusy = busyRegs[stages[_ID].bitmap->rt];
+        rtBusy = busyRegs[stages[_ID].bitmap->rt];
     }
     else{
-    rdBusy = busyRegs[stages[_ID].bitmap->rd];
+        rdBusy = busyRegs[stages[_ID].bitmap->rd];
     }
 
     printBusyRegs(); 
@@ -580,14 +575,12 @@ void Pipeline::Hazards(void) {
     if (rtBusy > 0 || rdBusy > 0) {
         printf("RT: %d, RD: %d\n", rtBusy, rdBusy);
        	stallCondition = true; 
+        
         // Stall the pipeline until the busiest register is free
         stall();
     } 
-    
     else {
-	
-	stallCondition = false;
-    
+    	stallCondition = false;
     }
  
 
