@@ -271,6 +271,7 @@ void Pipeline::printReport() {
 
     cout << "Program Counter: " << PC << endl;
     cout << "Instructions fetched: " << instrFetched << endl;
+    cout << "Number of stalls: " << numStalls << endl;
     
     for (int i = 0; i < 32; i++) {
         if(registers[i] != 0) {
