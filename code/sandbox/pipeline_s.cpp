@@ -255,7 +255,9 @@ void Pipeline::printReport() {
     cout << "Instructions fetched: " << instrFetched << endl;
     
     for (int i = 0; i < 32; i++) {
-        cout << "R" << i << ": " << registers[i] << endl;
+        if(registers[i] != 0) {
+            cout << "R" << i << ": " << registers[i] << endl;
+        }
     }
 
     for (auto const& x : memory) {
