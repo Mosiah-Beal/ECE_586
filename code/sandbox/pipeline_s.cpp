@@ -453,11 +453,12 @@ void Pipeline::stall(void) {
 
 // Flush pipeline after misprediction
 void Pipeline::flush(void) {
-   
+cout << "Flushing pipeline" << endl;
+flushFlag = true;
+
+// clear the IF stage somehow
 stages[_ID].name = "NOP";
 stages[_EX].name = "NOP";
-std::cout << "test implementmentation" << std::endl;
-
 }
 
 /**
@@ -674,6 +675,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
 
                 PC += metadata.bitmap->imm * 4;
+                // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		        flush();
             }
             break;
@@ -683,6 +685,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
                 
                 PC += metadata.bitmap->imm * 4;
+                // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		        flush();
             }
             break;
@@ -691,6 +694,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << registers[metadata.bitmap->rs] << endl;
 
             PC = registers[metadata.bitmap->rs];
+            // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 	        flush();
             break;
         default:
@@ -869,8 +873,16 @@ void Pipeline::moveStages(int line) {
     
     // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
-        IF(line);
-        cout << endl;
+        if(flushFlag) {
+            line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
+            IF(line);
+            flushFlag = false;
+            return;
+        }
+
+        IF(line); // Fetch instruction
+        
+        std::cout << endl;
         return;    
     }
 
@@ -927,7 +939,7 @@ void Pipeline::run() {
         lastPC = PC;
 
     } while ((PC * 0.25) < (int) instructionMemory.size());   // Continue until HALT is found or PC exceeds the instruction memory range
-    std::cout << "[Main]: HALT instruction found\n";
+    cout << "[Main]: HALT instruction found\n\n\n" << endl;
 
     // Empty the pipeline of any remaining instructions
     for(int i = 0; i < 5; i++){
