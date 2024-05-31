@@ -333,9 +333,6 @@ void Pipeline::flush(void) {
    
 stages[_ID].name = "NOP";
 stages[_EX].name = "NOP";
-stages[_MEM].name = "NOP";
-stages[_WB].name = "NOP";
-
 std::cout << "test implementmentation" << std::endl;
 
 }
