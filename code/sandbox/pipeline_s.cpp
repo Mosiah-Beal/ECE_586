@@ -490,7 +490,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
         
         // CONTROL FLOW
         case 14: // BZ
-            if (registers[metadata.bitmap->rt] == 0) {
+            if (registers[metadata.bitmap->rs] == 0) {
                 PC += metadata.bitmap->imm * 4;
                 cout << "\t[EX]: Branching to " << PC << endl;
             }
@@ -502,7 +502,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             }
             break;
         case 16: // JR
-            PC += registers[metadata.bitmap->rt] * 4;
+            PC += registers[metadata.bitmap->rs] * 4;
             cout << "\t[EX]: Jumping to " << PC << endl;
             break;
         default:
