@@ -197,6 +197,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
     // LDW
     if (metadata.bitmap->opcode == 12) { 
 	cout << "\t\t\tinstructionMemory[ALUresult]: "<< instructionMemory[ALUresult] << endl;
+    cout << ALUresult << endl;
         MDR = stoi(instructionMemory[ALUresult], 0, 16);
         cout << "\t[MEM] MDR: " << MDR << endl;
         return;

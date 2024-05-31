@@ -79,30 +79,6 @@ int main(int argc, char* argv[]) {
     pipeline.run();
     return 0;
 
-
-    int instrIndex = 0; // index of instruction in file
-    int nxtInstr = 0; // next instruction to be processed
-
-    // Loop through each instruction in the trace file until HALT is found
-    do {
-        std::cout << "[Main]: " << instrIndex << std::endl;
-        nxtInstr = std::stoi(fileImage.at(instrIndex++), 0, 16); // convert to int for parsing
-        
-
-        pipeline.moveStages(nxtInstr); // move stages in pipeline
-    } while (pipeline.checkHalt(nxtInstr) && instrIndex < (int) fileImage.size());
-
-    
-
-    // Empty the pipeline of any remaining instructions
-    for(int i = 0; i < 5; i++){
-        pipeline.moveStages(0);
-    }
-
-    // Print the execution report
-    pipeline.printExecutionReport();
-
-    return 0;
 }
 
 #include <bitset>
