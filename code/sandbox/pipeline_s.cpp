@@ -308,7 +308,15 @@ void Pipeline::printReport() {
     cout << "\tIMM: " << metadata.bitmap->imm << endl;
  }
 
+void Pipeline::printBusyRegs(void) {
 
+for(int i = 0; i<32; i++) {
+	if(busyRegs[i] > 0){
+	cout << "Register[" << i << "] Busy for: " << busyRegs[i] << endl;
+	}
+   }
+
+}
 /*-------------------------------------------------------------------------------------------- 
 SECTION 3 Pipeline control
 --------------------------------------------------------------------------------------------*/
