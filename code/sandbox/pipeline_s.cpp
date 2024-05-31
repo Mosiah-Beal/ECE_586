@@ -904,7 +904,7 @@ void Pipeline::run() {
         }
 
         // Print the main index and PC
-        cout << "[Main]: " << mainIndex++ << "\tPC: " << PC << endl;
+        cout << "\n[Main]: " << mainIndex++ << "\tPC: " << PC << endl;
         
         // break if HALT instruction is found (IF stage)
         if(!checkHalt(instruction)){
