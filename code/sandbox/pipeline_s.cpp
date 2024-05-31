@@ -317,8 +317,13 @@ void Pipeline::stall(int cycles) {
 
 // Flush pipeline after misprediction
 void Pipeline::flush(void) {
-    // TODO: Implement
-    std::cout << "Not implemented" << std::endl;
+   
+stages[_ID].name = "NOP";
+stages[_EX].name = "NOP";
+stages[_MEM].name = "NOP";
+stages[_WB].name = "NOP";
+
+std::cout << "test implementmentation" << std::endl;
 
 }
 
@@ -503,17 +508,20 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             if (registers[metadata.bitmap->rs] == 0) {
                 PC += metadata.bitmap->imm * 4;
                 cout << "\t[EX]: Branching to " << PC << endl;
+		flush();
             }
             break;
         case 15: // BEQ
             if (registers[metadata.bitmap->rt] == registers[metadata.bitmap->rs]) {
                 PC += metadata.bitmap->imm * 4;
                 cout << "\t[EX]: Branching to " << PC << endl;
+		flush();
             }
             break;
         case 16: // JR
             PC = registers[metadata.bitmap->rs];
             cout << "\t[EX]: Jumping to " << PC << endl;
+	    flush();
             break;
         default:
             cout << "Error: Invalid opcode" << endl;
