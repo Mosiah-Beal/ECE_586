@@ -326,6 +326,7 @@ void Pipeline::stall(void) {
 
     stages[_EX].name = "NOP";
     numStalls++;
+    stallCondition = true;
 }
 
 // Flush pipeline after misprediction
