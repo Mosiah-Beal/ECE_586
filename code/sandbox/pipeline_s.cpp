@@ -210,7 +210,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
         cout << "\t\t\t\t\tp = "<< *p << endl; 
 	instructionMemory[ALUresult] = *p;
 
-        cout << "\t[MEM] Memory[" << ALUresult << "]: " << memory[ALUresult] << endl;
+        cout << "\t[MEM] InstructionMemory[" << ALUresult << "]: " << instructionMemory[ALUresult] << endl;
         return;
     }
 
@@ -279,7 +279,7 @@ void Pipeline::printReport() {
         }
     }
 
-    for (auto const& x : memory) {
+    for (auto const& x : instructionMemory) {
         cout << "Memory[" << x.first << "]: " << x.second << endl;
     }
     cout << endl;
@@ -746,14 +746,9 @@ void Pipeline::run() {
         std::cout << "[Main]: " << mainIndex++ << std::endl;
         cout << "PC: " << PC << endl;
         
-        // break if HALT instruction is found
+        // break if HALT instruction is found (IF stage)
         if(!checkHalt(instruction)){
             break;
-        }
-
-        if(mainIndex > 990) {
-            cout << "Error: PC exceeded instruction memory range" << endl;
-           break;
         }
 
         moveStages(instruction);
@@ -765,6 +760,7 @@ void Pipeline::run() {
             break;
         }
 
+        // Cheat to end execution if we go past what we expect the instruction memory range to be
         if(PC>200)
 		break;
  
@@ -780,7 +776,7 @@ void Pipeline::run() {
 
     // decrement the typeExecd for arithmetic instructions by 5 since we are flushing by adding 0 to 0
     typeExecd[0] -= 5;
-        
+
     // stall 5 cycles to flush the pipeline
     printExecutionReport();
 }
