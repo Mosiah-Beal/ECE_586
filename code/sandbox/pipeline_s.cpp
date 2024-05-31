@@ -295,25 +295,35 @@ SECTION 2 Helper functions
 
 // Print Statistics  
 void Pipeline::printReport() {
-    cout << std::endl << "Arithmetic instructions executed: " << typeExecd[0] << endl;
+    cout << endl;
+    
+    int totalInstr = typeExecd[0] + typeExecd[1] + typeExecd[2] + typeExecd[3];
+    cout << "Total number of instructions: " << totalInstr << endl;
+    cout << "Arithmetic instructions executed: " << typeExecd[0] << endl;
     cout << "Logical instructions executed: " << typeExecd[1] << endl;
     cout << "Memory access instructions executed: " << typeExecd[2] << endl;
     cout << "Control flow instructions executed: " << typeExecd[3] << endl;
 
+
     cout << "Program Counter: " << PC << endl;
-    cout << "Instructions fetched: " << instrFetched << endl;
-    cout << "Number of stalls: " << numStalls << endl;
-    
     for (int i = 0; i < 32; i++) {
         if(registers[i] != 0) {
             cout << "R" << i << ": " << registers[i] << endl;
         }
     }
-    string empty = "00000000";
+    cout << "Number of stalls: " << numStalls << endl;
+    
+    for (auto const& x : changedMemory) {
+        cout << "Changed Memory[" << x.first << "]: " << x.second << endl;
+    }
+
+    cout << endl;
+
+    // return;
 
     for (auto const& x : instructionMemory) {
         // After the halt instruction, don't print any memory adresses with values of 00000000
-        if(x.second.compare(empty) == 0) {
+        if(x.second.compare("00000000") == 0) {
             continue;
         }
 
@@ -327,12 +337,7 @@ void Pipeline::printReport() {
     }
     cout << endl;
 
-    for (auto const& x : changedMemory) {
-        cout << "Changed Memory[" << x.first << "]: " << x.second << endl;
-    }
-
-    cout << endl;
-
+    
 }
 
 
@@ -675,7 +680,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
 
                 PC += metadata.bitmap->imm * 4;
-                // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		        flush();
             }
             break;
@@ -685,7 +690,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
                 
                 PC += metadata.bitmap->imm * 4;
-                // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		        flush();
             }
             break;
@@ -694,7 +699,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << registers[metadata.bitmap->rs] << endl;
 
             PC = registers[metadata.bitmap->rs];
-            // PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+            PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 	        flush();
             break;
         default:
