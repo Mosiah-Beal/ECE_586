@@ -81,11 +81,10 @@ private:
 
     // Helper functions
     void printStages();
-    void printBusyRegs();
+    void printBusyRegs();   // Print the busy registers
     void printMDR();
-    void printReport(); // Print the number of times each instruction type was executed
+    void printReport();     // Print the number of times each instruction type was executed
     void printFields(instr_metadata &metadata); // Print the fields of the instruction
-    void printBusyRegs(); // Print the busy registers
 
     // Pipeline control
     void stall();                   // Insert stall cycles
