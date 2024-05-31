@@ -565,6 +565,11 @@ void Pipeline::Hazards(void) {
     int rtBusy = 0;
     int rdBusy = 0;
 
+    // verify that R0 is always 0
+    if(registers[0] != 0) {
+        cout << "\t\t\tError: R0 is not 0" << endl;
+    }
+
     if(!stages[_ID].addressMode){
         rtBusy = busyRegs[stages[_ID].bitmap->rt];
     }
