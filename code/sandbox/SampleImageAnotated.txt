@@ -11,7 +11,7 @@
 30440000 LDW rs 2 rt 4 rd 0 imm_rd 0        //R4 = mem[R2 + 0]
 08642800 SUB rs 3 rt 4 rd 5 imm_rd 0        //R5 = R3 - R4
 24A60001 ANDI rs 5 rt 6 rd 0 imm_rd 1       //R6 = R5 & 1 
-38C00002 BZ rs 6 rt 0 rd 0 imm_rd 2	    //branch[+=2] if R6 = 0
+38C00002 BZ rs 6 rt 0 rd 0 imm_rd 2	        //branch[+=2] if R6 = 0
 04E70001 ADD rs 2 rt 14 rd 14 imm_rd 0      //R14 = R2 + R14
 01034000 ADD rs 8 rt 3 rd 8 imm_rd 0        //R8 = R8 + R3
 01244800 ADD rs 9 rt 4 rd 9 imm_rd 0	    //R9 = R9 + R4

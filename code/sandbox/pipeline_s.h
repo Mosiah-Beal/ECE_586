@@ -66,7 +66,7 @@ private:
     
     //maps
  	public:
-    std::map<int, int> memory; // Memory <address, value>
+    std::map<int, int> changedMemory;               // Memory <address, value>
     std::map<int, instr_metadata> instructionSet;   // Instruction set
     std::map<int, std::string> instructionMemory;   // Instruction memory <address, instruction>
     std::map<int, int> opcodeHeatMap;               // <Opcode, number of times executed>

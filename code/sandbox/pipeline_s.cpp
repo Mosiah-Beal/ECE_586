@@ -41,7 +41,7 @@ Pipeline::Pipeline() {
     
 
     // clear memory
-    memory.clear();
+    changedMemory.clear();
 
     // Initialize registers
     registers.resize(32);
@@ -91,6 +91,14 @@ void Pipeline::IF(int inputBin) {
     metadataPtr->bitmap = new Bitmap;
 
     metadataPtr->instructionNumber = instrFetched++; // store instruction number   
+
+    //FIXME: Remove once everything works
+    if(instrFetched > 650) {
+        cout << "We have surpassed the expected number of instructions" << endl;
+        criticalProblem = true;
+    }
+
+
     metadataPtr->bin_bitmap = inputBin;   // store binary representation of instruction 
     
     printf("[IF]: Fetching bitmap = %0X\n", inputBin);
@@ -191,7 +199,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
 
     //Jumps (return)
     if(metadata.bitmap->opcode > 13) {
-        cout << "[MEM]: Flush" << endl;
+        cout << "\t[MEM]: Flush" << endl;
         return;
     }
     
@@ -228,7 +236,8 @@ void Pipeline::MEM(instr_metadata &metadata) {
 
         // Store the string in memory
         instructionMemory[ALUresult] = *p;
-        cout << "\t[MEM] Memory[" << ALUresult << "]: " << instructionMemory[ALUresult];
+        changedMemory[ALUresult] = registers[metadata.bitmap->rt];
+        cout << "\t[MEM] Memory[" << ALUresult << "] = " << instructionMemory[ALUresult];
         cout << "\t(ALUresult=" << ALUresult << ")" << endl;
         cout << "\t[MEM] *p: " << *p << endl;
         return;
@@ -262,7 +271,7 @@ void Pipeline::WB(instr_metadata &metadata) {
     }
 
     if(metadata.bitmap->opcode > 13) {
-        cout << "[WB]: Flush" << endl;
+        cout << "\t[WB]: Flush" << endl;
         return;
     }
 
@@ -300,10 +309,28 @@ void Pipeline::printReport() {
             cout << "R" << i << ": " << registers[i] << endl;
         }
     }
+    string empty = "00000000";
 
     for (auto const& x : instructionMemory) {
+        // After the halt instruction, don't print any memory adresses with values of 00000000
+        if(x.second.compare(empty) == 0) {
+            continue;
+        }
+
         cout << "Memory[" << x.first << "]: " << x.second << endl;
+
+        // Check if the memory address is aligned
+        if(x.first % 4 != 0) {
+            cout << "Error: Memory address not aligned" << endl;
+        }
+
     }
+    cout << endl;
+
+    for (auto const& x : changedMemory) {
+        cout << "Changed Memory[" << x.first << "]: " << x.second << endl;
+    }
+
     cout << endl;
 
 }
@@ -342,7 +369,7 @@ for(int i = 0; i<32; i++) {
 void Pipeline::printInstruction(instr_metadata &metadata) {
 
     // print the name of the instruction
-    cout << "Instruction: " << metadata.name;
+    cout << "Instruction " << metadata.instructionNumber << ": " << metadata.name;
 
     // if it is a NOP, print nothing else
     if(metadata.name == "NOP") {
@@ -619,16 +646,16 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
         
         case 12: // LDW //FIXME: Rs + imm
             ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
-            cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm << " = " << ALUresult << endl;
+            cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm;
+            cout << "\t(ALUresult = " << ALUresult << ")" << endl;
             if(ALUresult % 4 != 0) {
                 cout << "\t\tError: Memory address not aligned" << endl;
                 criticalProblem = true;
                 metadata.name += " Error" ;
                 printFields(metadata);
-                break;
             }
-            
-            break;
+            return metadata;
+
         case 13: // STW //FIXME: Rs + imm
             ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
             cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm << " = " << ALUresult << endl;
@@ -638,7 +665,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 metadata.name += " Error" ;
                 printFields(metadata);
             }
-            break;
+            return metadata;
         
         // CONTROL FLOW
         case 14: // BZ
