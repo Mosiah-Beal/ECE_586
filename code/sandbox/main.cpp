@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
             line = line.substr(2);
         }
 
-        // Take only the first 8 characters of the line (or up to the first space)
-        // line = line.substr(0, line.find(' '));
+        // Take only the first 8 characters of the line
+        line = line.substr(0, 8);
 
         // skip line if it is non-hexadecimal
         if (line.find_first_not_of("0123456789ABCDEFabcdef") != std::string::npos) {
