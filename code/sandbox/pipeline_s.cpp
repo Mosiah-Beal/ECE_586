@@ -109,9 +109,14 @@ void Pipeline::ID(instr_metadata &metadata) {
 
     // Decode the instruction and fill the metadata
     metadata = parseInstruction(metadata);
-
     cout << "[ID] Instruction: " << metadata.name << endl;
     printFields(metadata);
+
+    // Check for hazards
+    Hazards();
+
+    // Update busy registers
+    setBusyRegs(metadata);
 
     // Put the filled metadata back into the stage
     stages[_ID] = metadata;
@@ -188,6 +193,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
 
     //Jumps (return)
     if(metadata.bitmap->opcode > 13) {
+        cout << "[MEM]: Flush" << endl;
         return;
     }
     
@@ -234,6 +240,11 @@ void Pipeline::WB(instr_metadata &metadata) {
 
     if(metadata.name == "ERROR") {
         cout << "[ID]: ERROR" << endl;
+        return;
+    }
+
+    if(metadata.bitmap->opcode > 13) {
+        cout << "[WB]: Flush" << endl;
         return;
     }
 
@@ -303,16 +314,10 @@ SECTION 3 Pipeline control
 --------------------------------------------------------------------------------------------*/
 
 // Insert stall
-void Pipeline::stall(int cycles) {
+void Pipeline::stall(void) {
 
-    instr_metadata* metadata = new instr_metadata;
-    metadata->name = "NOP";
-
-
-    for(int i = 0; i < cycles; i++) {
-        //TODO: Insert NOP(s) into stages
-        numStalls++;
-    }
+    stages[_EX].name = "NOP";
+    numStalls++;
 }
 
 // Flush pipeline after misprediction
@@ -366,6 +371,21 @@ SECTION 4 Control functions
 void Pipeline::initBusyRegs(void) {
     for (int i = 0; i < 32; i++) {
         busyRegs[i] = 0;
+    }
+}
+
+void Pipeline::setBusyRegs(instr_metadata &metadata) {
+
+    if(stallCondition) {
+        return;
+    }
+
+
+    // Set the destination register as busy
+    if (metadata.addressMode == 0) { // Immediate addressing
+        busyRegs[metadata.bitmap->rt] = metadata.len;
+    } else { // Register addressing
+        busyRegs[metadata.bitmap->rd] = metadata.len;
     }
 }
 
@@ -537,32 +557,33 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
 //Error handling for Hazards
 void Pipeline::Hazards(void) {
 
- // The instruction in the decode stage has registers which need to be checked for dependencies
-    int rsBusy = busyRegs[stages[_ID].bitmap->rs];
-    int rtBusy = busyRegs[stages[_ID].bitmap->rt];
-    int rdBusy = busyRegs[stages[_ID].bitmap->rd];
+    // The instruction in the decode stage has registers which need to be checked for dependencies
     
-    // Check if any of the registers are in use
-    if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
-        printf("RS: %d, RT: %d, RD: %d\n", rsBusy, rtBusy, rdBusy);
-        
-        // Stall the pipeline until the busiest register is free
+    int rtBusy = 0;
+    int rdBusy = 0;
 
-        // Assume RS at first
-        int maxBusy = rsBusy;
-        if (rtBusy > maxBusy) {
-            maxBusy = rtBusy;
-            // If RT is busier than RS, set maxBusy to RT
-            // Now check if RD is busier than RT
-            if (rdBusy > maxBusy) {
-                maxBusy = rdBusy;
-            }
-        }
-        else if(rdBusy > maxBusy) {
-            maxBusy = rdBusy;
-        }
-        stall(maxBusy);
+    if(!stages[_ID].addressMode){
+     rtBusy = busyRegs[stages[_ID].bitmap->rt];
+    }
+    else{
+    rdBusy = busyRegs[stages[_ID].bitmap->rd];
+    }
+
+    printBusyRegs(); 
+    // Check if any of the registers are in use
+    if (rtBusy > 0 || rdBusy > 0) {
+        printf("RT: %d, RD: %d\n", rtBusy, rdBusy);
+       	stallCondition = true; 
+        // Stall the pipeline until the busiest register is free
+        stall();
     } 
+    
+    else {
+	
+	stallCondition = false;
+    
+    }
+ 
 
 }
 
@@ -681,21 +702,27 @@ void Pipeline::moveStages(int line) {
     stages[_MEM] = stages[_EX]; // Pull instruction from EX to MEM
     MEM(stages[_MEM]); // Memory operation    
 
-    stages[_EX] = stages[_ID]; // Pull instruction from ID to EX
+    if(stallCondition) {
+        stages[_EX].name = "NOP"; // Insert NOP in EX stage if we are stalling
+    }
+    else {
+        stages[_EX] = stages[_ID]; // Pull instruction from ID to EX
+    }
     EX(stages[_EX]); // Execute instruction
     
     stages[_ID] = stages[_IF]; // Pull instruction from IF to ID
     ID(stages[_ID]); // Decode instruction
     
-    // call IF to fill IF stage
-
-
+    // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
         IF(line);
         cout << endl;
         return;    
     }
-    moveStages(line);
+
+    decrBusyRegs();     // Decrement busy registers
+    cout << endl;
+    moveStages(line);   // Recursively call moveStages until the stall condition is false
 }
 
 // checks to see if a halt instruction is found

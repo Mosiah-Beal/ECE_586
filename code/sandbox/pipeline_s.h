@@ -7,6 +7,8 @@
 #include <iostream>
 #include <algorithm>
 
+using namespace std;
+
 // Define constants for the stages
 #define _IF 0
 #define _ID 1
@@ -26,12 +28,14 @@ typedef struct {
 
 // Used to parse instruction and update type counter
 typedef struct {
-    std::string name;   // for print/debugging
-    int bin_bitmap ;       // Binary representation of instruction
+    string name;            // for print/debugging
+    string originalLine;    // original line from file
+    int bin_bitmap ;        // Binary representation of instruction
     int instructionNumber;  // When this instruction was fetched
 
-    Bitmap* bitmap;    // Struct for decoded instruction    
-    bool addressMode;   // 0 = immediate, 1 = register
+    Bitmap* bitmap;         // Struct for decoded instruction    
+    bool addressMode;       // 0 = immediate, 1 = register
+    int len;                // How many cycles this instruction takes
     int type;
     /**
      * Type of instruction:
@@ -51,7 +55,6 @@ private:
     int ALUresult;    // Result of ALU operation
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
-
     bool stallCondition;  // Flag to stall pipeline
 
     int instrFetched;   // Number of instructions fetched
@@ -90,6 +93,7 @@ private:
 
     // Control functions
     void initBusyRegs();    // Initialize busy registers to 0
+    void setBusyRegs(instr_metadata &metadata); // Set the destination register as busy
     void decrBusyRegs();    // Decrement busy registers by 1 (at end of cycle)
     instr_metadata parseInstruction(instr_metadata &metadata);
     instr_metadata  executeInstruction(instr_metadata &metadata);
