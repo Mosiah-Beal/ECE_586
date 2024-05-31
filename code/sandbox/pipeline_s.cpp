@@ -772,7 +772,15 @@ void Pipeline::run() {
 
     } while ((PC * 0.25) < (int) instructionMemory.size());   // Continue until HALT is found or PC exceeds the instruction memory range
     std::cout << "[Main]: HALT instruction found\n";
-    
+
+    // Empty the pipeline of any remaining instructions
+    for(int i = 0; i < 5; i++){
+        moveStages(0);
+    }
+
+    // decrement the typeExecd for arithmetic instructions by 5 since we are flushing by adding 0 to 0
+    typeExecd[0] -= 5;
+        
     // stall 5 cycles to flush the pipeline
     printExecutionReport();
 }
