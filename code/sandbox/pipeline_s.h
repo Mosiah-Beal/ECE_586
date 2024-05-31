@@ -56,6 +56,7 @@ private:
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
     bool stallCondition;  // Flag to stall pipeline
+    bool criticalProblem; // Flag to halt pipeline
 
     int instrFetched;   // Number of instructions fetched
 
@@ -85,6 +86,7 @@ private:
     void printMDR();
     void printReport();     // Print the number of times each instruction type was executed
     void printFields(instr_metadata &metadata); // Print the fields of the instruction
+    void printInstruction(instr_metadata &metadata); // Print the instruction
 
     // Pipeline control
     void stall();                   // Insert stall cycles
@@ -99,7 +101,7 @@ private:
     void Hazards();            // Check for data hazards
     void printBinary(int n);   // Print binary representation of int
     void defineInstSet();      // Define the instruction set
-    void setInstruction(std::string instrName, int opcode, int type, bool addressMode);
+    void setInstruction(std::string instrName, int opcode, int type, bool addressMode, int len);
     int getOpcode(int bin);         // Get the opcode from the binary instruction
     instr_metadata getInstruction(int opcode); // Get instruction by opcode
     void internalPipeMove(int sourceIndex, int destIndex); // Move instruction from source to dest stage

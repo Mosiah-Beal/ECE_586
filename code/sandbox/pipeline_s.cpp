@@ -35,6 +35,9 @@ Pipeline::Pipeline() {
     MDR = 0;
     PC = 0;
     instrFetched = 0;
+
+    stallCondition = false;
+    criticalProblem = false;
     
 
     // clear memory
@@ -90,7 +93,7 @@ void Pipeline::IF(int inputBin) {
     metadataPtr->instructionNumber = instrFetched++; // store instruction number   
     metadataPtr->bin_bitmap = inputBin;   // store binary representation of instruction 
     
-    printf("bitmap = %x\n", inputBin);
+    printf("[IF]: Fetching bitmap = %0X\n", inputBin);
     stages[_IF] = *metadataPtr; // store instruction in IF stage
 }
 
@@ -109,8 +112,9 @@ void Pipeline::ID(instr_metadata &metadata) {
 
     // Decode the instruction and fill the metadata
     metadata = parseInstruction(metadata);
-    cout << "[ID] Instruction: " << metadata.name << endl;
-    printFields(metadata);
+    cout << "[ID] ";
+    printInstruction(metadata);
+    // printFields(metadata);
 
     // Check for hazards
     Hazards();
@@ -148,15 +152,11 @@ void Pipeline::EX(instr_metadata &metadata) {
         return;
     }
     
-    cout << "[EX] Instruction: " << metadata.name << endl;
-    printFields(metadata);
+    cout << "[EX] ";
+    printInstruction(metadata);
+    // printFields(metadata);
 
-    // Execute the instruction
-    cout << "\t\t\t\t[PC]: " << PC << endl;
-    
     metadata =  executeInstruction(metadata);
-    
-    cout << "\t\t\t\t[PC]: " << PC << endl;
     
     // Update status
     // cout << "Type: " << inst.type << endl;
@@ -185,8 +185,9 @@ void Pipeline::MEM(instr_metadata &metadata) {
     }
 
     // If it is not a NOP, print the fields
-    cout << "[MEM] Instruction: " << metadata.name << endl;
-    printFields(metadata);
+    cout << "[MEM] ";
+    printInstruction(metadata);
+    // printFields(metadata);
 
     //Jumps (return)
     if(metadata.bitmap->opcode > 13) {
@@ -196,35 +197,54 @@ void Pipeline::MEM(instr_metadata &metadata) {
     
     // LDW
     if (metadata.bitmap->opcode == 12) { 
-	cout << "\t\t\tinstructionMemory[ALUresult]: "<< instructionMemory[ALUresult] << endl;
-    cout << ALUresult << endl;
+        if(ALUresult % 4 != 0) {
+            cout << "\t\tError: Memory address not aligned" << endl;
+            criticalProblem = true;
+            metadata.name += " Error" ;
+            printFields(metadata);
+        }
+
         MDR = stoi(instructionMemory[ALUresult], 0, 16);
-        cout << "\t[MEM] MDR: " << MDR << endl;
+        cout << "\t[MEM]: MDR = " << MDR;
+        cout << "\t(ALUresult=" << ALUresult << ")" << endl;
         return;
     }
     
     // STW
     if(metadata.bitmap->opcode == 13) {
 	
-	char *p = (char *)malloc(sizeof(char)*(9));
-	sprintf(p, "%X", registers[metadata.bitmap->rt]);  
-        cout << "\t\t\t\t\tp = "<< *p << endl; 
-	instructionMemory[ALUresult] = *p;
+        if(ALUresult % 4 != 0) {
+            cout << "\t\tError: Memory address not aligned" << endl;
+            criticalProblem = true;
+            metadata.name += " Error" ;
+            printFields(metadata);
+        }
 
-        cout << "\t[MEM] InstructionMemory[" << ALUresult << "]: " << instructionMemory[ALUresult] << endl;
+        // Allocate memory for the string to store in memory
+	    char *p = (char *)malloc(sizeof(char)*(9));
+
+        // Convert the integer in RT to a hex string
+	    sprintf(p, "%0X", registers[metadata.bitmap->rt]);
+
+        // Store the string in memory
+        instructionMemory[ALUresult] = *p;
+        cout << "\t[MEM] Memory[" << ALUresult << "]: " << instructionMemory[ALUresult];
+        cout << "\t(ALUresult=" << ALUresult << ")" << endl;
+        cout << "\t[MEM] *p: " << *p << endl;
         return;
     }
 
     if (metadata.addressMode == 0) { // Immediate addressing
-
-        cout << "\t[MEM] ALUresult: " << ALUresult << endl;
+        // Update the register
         registers[metadata.bitmap->rt] = ALUresult;
-        cout << "\t[MEM] RT: " << metadata.bitmap->rt << " = " << registers[metadata.bitmap->rt] << endl;
-    } 
+        cout << "\t[MEM]: R" << metadata.bitmap->rt << " = " << ALUresult;
+        cout << "\t(R" << metadata.bitmap->rt << "=" << registers[metadata.bitmap->rt] << ")" << endl;
+    }
     else { // Register addressing
-        cout << "\t[MEM] ALUresult: " << ALUresult << endl;
+        // Update the register
         registers[metadata.bitmap->rd] = ALUresult;
-        cout << "\t[MEM] RD: " << metadata.bitmap->rd << " = " << registers[metadata.bitmap->rd] << endl;
+        cout << "\t[MEM]: R" << metadata.bitmap->rd << " = " << ALUresult;
+        cout << "\t(R" << metadata.bitmap->rd << "=" << registers[metadata.bitmap->rd] << ")" << endl;
     }
 }
 
@@ -246,13 +266,14 @@ void Pipeline::WB(instr_metadata &metadata) {
         return;
     }
 
-    cout << "[WB] Instruction: " << metadata.name << endl;
+    cout << "[WB] ";
+    printInstruction(metadata);
 
     // Only LDW will reach this stage
     if (metadata.bitmap->opcode == 12) {
-        cout << "\t[WB] MDR: " << MDR << endl;
         registers[metadata.bitmap->rt] = MDR;
-        cout << "\t[WB] Memory[" << metadata.bitmap->rt << "]: " << memory[metadata.bitmap->rt] << endl;
+        cout << "\t[WB]: R" << metadata.bitmap->rt << " = " << MDR;
+        cout << "\t(R" << metadata.bitmap->rt << "=" << registers[metadata.bitmap->rt] << ")" << endl;
     }
 
 
@@ -316,6 +337,81 @@ for(int i = 0; i<32; i++) {
    }
 
 }
+
+
+void Pipeline::printInstruction(instr_metadata &metadata) {
+
+    // print the name of the instruction
+    cout << "Instruction: " << metadata.name;
+
+    // if it is a NOP, print nothing else
+    if(metadata.name == "NOP") {
+        cout << endl;
+        return;
+    }
+
+    // based on the opcode, print the rest of the instruction
+    switch(metadata.bitmap->opcode) {
+        case 0: // ADD
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 1: // ADDI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 2: // SUB
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 3: // SUBI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 4: // MUL
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 5: // MULI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 6: // OR
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 7: // ORI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 8: // AND
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 9: // ANDI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 10: // XOR
+            cout << " R" << metadata.bitmap->rd << ", R" << metadata.bitmap->rs << ", R" << metadata.bitmap->rt << endl;
+            break;
+        case 11: // XORI
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 12: // LDW
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 13: // STW
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 14: // BZ
+            cout << " R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 15: // BEQ
+            cout << " R" << metadata.bitmap->rt << ", R" << metadata.bitmap->rs << ", #" << metadata.bitmap->imm << endl;
+            break;
+        case 16: // JR
+            cout << " R" << metadata.bitmap->rs << endl;
+            break;
+        case 17: // HALT
+            cout << endl;
+            break;
+        default:
+            cout << "Error: Invalid opcode" << endl;
+            break;
+    }
+}
+
 /*-------------------------------------------------------------------------------------------- 
 SECTION 3 Pipeline control
 --------------------------------------------------------------------------------------------*/
@@ -385,6 +481,10 @@ void Pipeline::setBusyRegs(instr_metadata &metadata) {
         return;
     }
 
+    if(metadata.len > 5) {
+        cout << "Error: Instruction length out of bounds" << endl;
+        return;        
+    }
 
     // Set the destination register as busy
     if (metadata.addressMode == 0) { // Immediate addressing
@@ -518,33 +618,53 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             break;
         
         case 12: // LDW //FIXME: Rs + imm
-            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm * 4;
-            cout << "\t[EX]: R" << metadata.bitmap->rs << " = Memory[" << metadata.bitmap->imm << "]" << endl;
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
+            cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm << " = " << ALUresult << endl;
+            if(ALUresult % 4 != 0) {
+                cout << "\t\tError: Memory address not aligned" << endl;
+                criticalProblem = true;
+                metadata.name += " Error" ;
+                printFields(metadata);
+                break;
+            }
+            
             break;
         case 13: // STW //FIXME: Rs + imm
-            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm * 4;
-            cout << "\t[EX]: Memory[" << metadata.bitmap->imm << "] = R" << metadata.bitmap->rt << endl;
+            ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
+            cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm << " = " << ALUresult << endl;
+            if(ALUresult % 4 != 0) {
+                cout << "\t\tError: Memory address not aligned" << endl;
+                criticalProblem = true;
+                metadata.name += " Error" ;
+                printFields(metadata);
+            }
             break;
         
         // CONTROL FLOW
         case 14: // BZ
             if (registers[metadata.bitmap->rs] == 0) {
+                cout << "\t[EX]: Branching from " << PC << " to ";
+                cout << PC + metadata.bitmap->imm * 4 << endl;
+
                 PC += metadata.bitmap->imm * 4;
-                cout << "\t[EX]: Branching to " << PC << endl;
-		flush();
+		        flush();
             }
             break;
         case 15: // BEQ
             if (registers[metadata.bitmap->rt] == registers[metadata.bitmap->rs]) {
+                cout << "\t[EX]: Branching from " << PC << " to ";
+                cout << PC + metadata.bitmap->imm * 4 << endl;
+                
                 PC += metadata.bitmap->imm * 4;
-                cout << "\t[EX]: Branching to " << PC << endl;
-		flush();
+		        flush();
             }
             break;
         case 16: // JR
+            cout << "\t[EX]: Jumping from " << PC << " to ";
+            cout << registers[metadata.bitmap->rs] << endl;
+
             PC = registers[metadata.bitmap->rs];
-            cout << "\t[EX]: Jumping to " << PC << endl;
-	    flush();
+	        flush();
             break;
         default:
             cout << "Error: Invalid opcode" << endl;
@@ -620,25 +740,25 @@ void Pipeline::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
-    setInstruction("ADD", 0, 0, 1); // ADD
-    setInstruction("SUB", 2, 0, 1); // SUB
-    setInstruction("MUL", 4, 0, 1); // MUL
-    setInstruction("OR", 6, 1, 1); // OR
-    setInstruction("AND", 8, 1, 1); // AND
-    setInstruction("XOR", 10, 1, 1); // XOR
+    setInstruction("ADD", 0, 0, 1, 4); // ADD
+    setInstruction("SUB", 2, 0, 1, 4); // SUB
+    setInstruction("MUL", 4, 0, 1, 4); // MUL
+    setInstruction("OR", 6, 1, 1, 4); // OR
+    setInstruction("AND", 8, 1, 1, 4); // AND
+    setInstruction("XOR", 10, 1, 1, 4); // XOR
 
-    setInstruction("LDW", 12, 2, 0); // LDW
-    setInstruction("STW", 13, 2, 0); // STW
-    setInstruction("ADDI", 1, 0, 0); // ADDI
-    setInstruction("SUBI", 3, 0, 0); // SUBI
-    setInstruction("MULI", 5, 0, 0); // MULI
-    setInstruction("ORI", 7, 1, 0); // ORI
-    setInstruction("ANDI", 9, 1, 0); // ANDI
-    setInstruction("XORI", 11, 1, 0); // XORI
-    setInstruction("BEQ", 15, 3, 0); // BEQ
-    setInstruction("BZ", 14, 3, 0); // BZ
-    setInstruction("JR", 16, 3, 0); // JR
-    setInstruction("HALT", 17, 3, 0); // HALT
+    setInstruction("LDW", 12, 2, 0, 5); // LDW
+    setInstruction("STW", 13, 2, 0, 4); // STW
+    setInstruction("ADDI", 1, 0, 0, 4); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 4); // SUBI
+    setInstruction("MULI", 5, 0, 0, 4); // MULI
+    setInstruction("ORI", 7, 1, 0, 4); // ORI
+    setInstruction("ANDI", 9, 1, 0, 4); // ANDI
+    setInstruction("XORI", 11, 1, 0, 4); // XORI
+    setInstruction("BEQ", 15, 3, 0, 3); // BEQ
+    setInstruction("BZ", 14, 3, 0, 3); // BZ
+    setInstruction("JR", 16, 3, 0, 3); // JR
+    setInstruction("HALT", 17, 3, 0, 1); // HALT
 }
 
 
@@ -650,11 +770,12 @@ void Pipeline::defineInstSet() {
  * @param type 0 = arithmetic, 1 = logical, 2 = memory access, 3 = control flow
  * @param addressMode 0 = immediate, 1 = register
  */
-void Pipeline::setInstruction(std::string instrName, int opcode, int type, bool addressMode) {
+void Pipeline::setInstruction(std::string instrName, int opcode, int type, bool addressMode, int len) {
     instr_metadata* metadata = new instr_metadata;
     metadata->name = instrName;
     metadata->type = type;
     metadata->addressMode = addressMode;
+    metadata->len = len;
     // cout << "[DEBUG - setInstruction]: Opcode: " << opcode << endl;
     metadata->bitmap = new Bitmap;
     instructionSet[opcode] = *metadata;
@@ -749,8 +870,14 @@ void Pipeline::run() {
     int lastPC = 0;
     // Move the instruction at the PC counter from the instruction memory to the IF stage
     do{
-        std::cout << "[Main]: " << mainIndex++ << std::endl;
-        cout << "PC: " << PC << endl;
+        // Check for critical problems
+        if(criticalProblem) {
+            cout << "Critical problem found. Exiting program" << endl;
+            break;
+        }
+
+        // Print the main index and PC
+        cout << "[Main]: " << mainIndex++ << "\tPC: " << PC << endl;
         
         // break if HALT instruction is found (IF stage)
         if(!checkHalt(instruction)){
