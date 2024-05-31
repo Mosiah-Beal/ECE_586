@@ -190,17 +190,23 @@ void Pipeline::MEM(instr_metadata &metadata) {
     if(metadata.bitmap->opcode > 13) {
         return;
     }
-
+    
     // LDW
     if (metadata.bitmap->opcode == 12) { 
-        MDR = memory[ALUresult];
+	cout << "\t\t\tinstructionMemory[ALUresult]: "<< instructionMemory[ALUresult] << endl;
+        MDR = stoi(instructionMemory[ALUresult], 0, 16);
         cout << "\t[MEM] MDR: " << MDR << endl;
         return;
     }
-
+    
     // STW
-    if(metadata.bitmap->opcode == 13) { 
-        memory[ALUresult] = registers[metadata.bitmap->rt];
+    if(metadata.bitmap->opcode == 13) {
+	
+	char *p = (char *)malloc(sizeof(char)*(9));
+	sprintf(p, "%X", registers[metadata.bitmap->rt]);  
+        cout << "\t\t\t\t\tp = "<< *p << endl; 
+	instructionMemory[ALUresult] = *p;
+
         cout << "\t[MEM] Memory[" << ALUresult << "]: " << memory[ALUresult] << endl;
         return;
     }
@@ -506,7 +512,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             }
             break;
         case 16: // JR
-            PC += registers[metadata.bitmap->rs] * 4;
+            PC = registers[metadata.bitmap->rs];
             cout << "\t[EX]: Jumping to " << PC << endl;
             break;
         default:
@@ -710,9 +716,9 @@ void Pipeline::run() {
             break;
         }
 
-        if(mainIndex > 500) {
+        if(mainIndex > 990) {
             cout << "Error: PC exceeded instruction memory range" << endl;
-            break;
+           break;
         }
 
         moveStages(instruction);
@@ -723,7 +729,10 @@ void Pipeline::run() {
             cout << "Error: PC is not incrementing" << endl;
             break;
         }
-        
+
+        if(PC>200)
+		break;
+ 
         lastPC = PC;
 
     } while ((PC * 0.25) < (int) instructionMemory.size());   // Continue until HALT is found or PC exceeds the instruction memory range

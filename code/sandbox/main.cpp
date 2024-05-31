@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     // Read each line of the trace file
     std::string line;
     int i = 0;
-    int doNothing = 0;
+   // int doNothing = 0;
     while (std::getline(traceFile, line)) {
         // skip line if it is empty
         if (line.empty()) {
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
         pipeline.instructionMemory[4*i++] = line;
 
 
-        // leave early if 4 instructions in a row are 00000000
+        /* leave early if 4 instructions in a row are 00000000
         if (line == "00000000") {
             doNothing++;
         } else {
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
         if (doNothing >= 4) {
             break;
         }
-
+	*/
     }
 
     // print the instruction memory
