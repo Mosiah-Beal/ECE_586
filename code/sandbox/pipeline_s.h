@@ -56,12 +56,13 @@ private:
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
     int instrFetched;   // Number of instructions fetched
+    int flushCount;
 
     bool flushFlag;         // Flag to flush pipeline
     bool stallCondition;    // Flag to stall pipeline
     bool criticalProblem;   // Flag to halt pipeline
 
-    
+   
 
     std::vector<int> registers;  // Registers
     std::vector<int> typeExecd;   // Number of times each instruction type was executed

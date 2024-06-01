@@ -89,9 +89,9 @@ void Pipeline::IF(int inputBin) {
     metadataPtr->type = metadata.type;
     metadataPtr->addressMode = metadata.addressMode;
     metadataPtr->bitmap = new Bitmap;
-
-    metadataPtr->instructionNumber = instrFetched++; // store instruction number   
-
+    metadataPtr->len = metadata.len;
+    if(!stallCondition) 
+    	metadataPtr->instructionNumber = instrFetched++; // store instruction number   
     //FIXME: Remove once everything works
     if(instrFetched > 650) {
         cout << "We have surpassed the expected number of instructions" << endl;
@@ -103,6 +103,9 @@ void Pipeline::IF(int inputBin) {
     
     printf("[IF]: Fetching bitmap = %0X\n", inputBin);
     stages[_IF] = *metadataPtr; // store instruction in IF stage
+     PC += 4; // increment program counter
+
+
 }
 
 //Instruction Decode
@@ -169,8 +172,7 @@ void Pipeline::EX(instr_metadata &metadata) {
     // Update status
     // cout << "Type: " << inst.type << endl;
     typeExecd[metadata.type]++; // update number of times instruction type was executed
-    PC += 4; // increment program counter
-
+    
     #ifdef DEBUG
     printf("(%d) ", PC);
     #endif
@@ -273,9 +275,10 @@ void Pipeline::WB(instr_metadata &metadata) {
     if(metadata.bitmap->opcode > 13) {
         cout << "\t[WB]: Flush" << endl;
         return;
-    }
+    } 
 
     cout << "[WB] ";
+    metadata.name = "NOP";
     printInstruction(metadata);
 
     // Only LDW will reach this stage
@@ -364,7 +367,7 @@ void Pipeline::printBusyRegs(void) {
 
 for(int i = 0; i<32; i++) {
 	if(busyRegs[i] > 0){
-	cout << "Register[" << i << "] Busy for: " << busyRegs[i] << endl;
+	cout << "\tRegister[" << i << "] Busy for: " << busyRegs[i] << endl;
 	}
    }
 
@@ -451,7 +454,7 @@ SECTION 3 Pipeline control
 // Insert stall
 void Pipeline::stall(void) {
 
-    stages[_EX].name = "NOP";
+    stages[_ID].name = "NOP";
     numStalls++;
     stallCondition = true;
 }
@@ -460,10 +463,11 @@ void Pipeline::stall(void) {
 void Pipeline::flush(void) {
 cout << "Flushing pipeline" << endl;
 flushFlag = true;
-
+stallCondition = true;
+if(flushCount == 0)
+	flushFlag = false; 
 // clear the IF stage somehow
 stages[_ID].name = "NOP";
-stages[_EX].name = "NOP";
 }
 
 /**
@@ -550,9 +554,9 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
             metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
         }
 
-       // #ifdef DEBUG
+  #ifdef DEBUG
 printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadata.bitmap->rs, metadata.bitmap->imm);
-       // #endif
+ #endif
     } else { // Register addressing
         metadata.bitmap->opcode = getOpcode(metadata.bin_bitmap);
         metadata.bitmap->rs = (metadata.bin_bitmap & 0x03E00000) >> 21;
@@ -560,9 +564,9 @@ printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadat
         metadata.bitmap->rd = (metadata.bin_bitmap & 0x0000F800) >> 11;
         metadata.bitmap->imm = 0; // No immediate value for register addressing
 
-       // #ifdef DEBUG
+   #ifdef DEBUG
         printf("%s R%d, R%d, R%d\n", metadata.name.c_str(), metadata.bitmap->rd, metadata.bitmap->rs, metadata.bitmap->rt);
-       // #endif
+    #endif
     }
 
     // Sanity check if any of the registers are out of bounds
@@ -681,8 +685,11 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
 
                 PC += metadata.bitmap->imm * 4;
                 PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
-		        flush();
+		flush();
             }
+	    else {
+	    cout << "\tBRANCH NOT TAKEN" << endl;
+	    }
             break;
         case 15: // BEQ
             if (registers[metadata.bitmap->rt] == registers[metadata.bitmap->rs]) {
@@ -691,8 +698,11 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 
                 PC += metadata.bitmap->imm * 4;
                 PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
-		        flush();
+		flush();
             }
+	    else {
+	    cout << "\tBRANCH NOT TAKEN" << endl;
+	    }
             break;
         case 16: // JR
             cout << "\t[EX]: Jumping from " << PC << " to ";
@@ -715,9 +725,8 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
 
 //Error handling for Hazards
 void Pipeline::Hazards(void) {
-
     // The instruction in the decode stage has registers which need to be checked for dependencies
-    
+    int rsBusy = 0;
     int rtBusy = 0;
     int rdBusy = 0;
 
@@ -727,26 +736,32 @@ void Pipeline::Hazards(void) {
     }
 
     if(!stages[_ID].addressMode){
+        rsBusy = busyRegs[stages[_ID].bitmap->rs];
         rtBusy = busyRegs[stages[_ID].bitmap->rt];
     }
     else{
+        rsBusy = busyRegs[stages[_ID].bitmap->rs];
+        rtBusy = busyRegs[stages[_ID].bitmap->rt];
         rdBusy = busyRegs[stages[_ID].bitmap->rd];
     }
 
-    printBusyRegs(); 
+    printBusyRegs();
     // Check if any of the registers are in use
-    if (rtBusy > 0 || rdBusy > 0) {
-        printf("RT: %d, RD: %d\n", rtBusy, rdBusy);
-       	stallCondition = true; 
-        
+    if (rsBusy > 0 || rtBusy > 0 || rdBusy > 0) {
+        if(!stages[_ID].addressMode){
+            cout << "\tSTALL FOR: " << max(rsBusy, rtBusy) << " CYCLE(S)" << endl;
+            stallCondition = true;
+        }
+        else {
+            cout << "\tSTALL FOR: " << max({rsBusy, rtBusy, rdBusy}) << " CYCLE(S)" << endl;
+            stallCondition = true;
+        }
         // Stall the pipeline until the busiest register is free
         stall();
-    } 
-    else {
-    	stallCondition = false;
     }
- 
-
+    else {
+        	stallCondition = false;
+    }
 }
 
 //used to check bit-wise operations on ints. int n to be printed in binary
@@ -776,25 +791,25 @@ void Pipeline::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
-    setInstruction("ADD", 0, 0, 1, 4); // ADD
-    setInstruction("SUB", 2, 0, 1, 4); // SUB
-    setInstruction("MUL", 4, 0, 1, 4); // MUL
-    setInstruction("OR", 6, 1, 1, 4); // OR
-    setInstruction("AND", 8, 1, 1, 4); // AND
-    setInstruction("XOR", 10, 1, 1, 4); // XOR
+    setInstruction("ADD", 0, 0, 1, 3); // ADD
+    setInstruction("SUB", 2, 0, 1, 3); // SUB
+    setInstruction("MUL", 4, 0, 1, 3); // MUL
+    setInstruction("OR", 6, 1, 1, 3); // OR
+    setInstruction("AND", 8, 1, 1, 3); // AND
+    setInstruction("XOR", 10, 1, 1, 3); // XOR
 
-    setInstruction("LDW", 12, 2, 0, 5); // LDW
-    setInstruction("STW", 13, 2, 0, 4); // STW
-    setInstruction("ADDI", 1, 0, 0, 4); // ADDI
-    setInstruction("SUBI", 3, 0, 0, 4); // SUBI
-    setInstruction("MULI", 5, 0, 0, 4); // MULI
-    setInstruction("ORI", 7, 1, 0, 4); // ORI
-    setInstruction("ANDI", 9, 1, 0, 4); // ANDI
-    setInstruction("XORI", 11, 1, 0, 4); // XORI
-    setInstruction("BEQ", 15, 3, 0, 3); // BEQ
-    setInstruction("BZ", 14, 3, 0, 3); // BZ
-    setInstruction("JR", 16, 3, 0, 3); // JR
-    setInstruction("HALT", 17, 3, 0, 1); // HALT
+    setInstruction("LDW", 12, 2, 0, 4); // LDW
+    setInstruction("STW", 13, 2, 0, 3); // STW
+    setInstruction("ADDI", 1, 0, 0, 3); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 3); // SUBI
+    setInstruction("MULI", 5, 0, 0, 3); // MULI
+    setInstruction("ORI", 7, 1, 0, 3); // ORI
+    setInstruction("ANDI", 9, 1, 0, 3); // ANDI
+    setInstruction("XORI", 11, 1, 0, 3); // XORI
+    setInstruction("BEQ", 15, 3, 0, 2); // BEQ
+    setInstruction("BZ", 14, 3, 0, 2); // BZ
+    setInstruction("JR", 16, 3, 0, 2); // JR
+    setInstruction("HALT", 17, 3, 0, 0); // HALT
 }
 
 
@@ -859,6 +874,7 @@ SECTION 5 User functions
 
 void Pipeline::moveStages(int line) {
 
+
     stages[_WB] = stages[_MEM]; // Pull instruction from MEM to WB
     WB(stages[_WB]);// Writeback the instruction pulled in this stage
     
@@ -878,19 +894,23 @@ void Pipeline::moveStages(int line) {
     
     // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
-        if(flushFlag) {
+        /*if(flushFlag) {
             line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
             IF(line);
             flushFlag = false;
             return;
-        }
-
+        }*/
+ 
         IF(line); // Fetch instruction
-        
+ 	decrBusyRegs();
+	flushCount = 2;       
         std::cout << endl;
         return;    
     }
-
+    if(flushFlag){
+	flushCount--;
+	stages[_ID].name = "NOP";
+    }
     decrBusyRegs();     // Decrement busy registers
     cout << endl;
     moveStages(line);   // Recursively call moveStages until the stall condition is false
@@ -909,7 +929,7 @@ int Pipeline::checkHalt(int bin) {
 
 void Pipeline::run() {
 
-    int instruction = stoi(instructionMemory[PC]); // should be initialized to 0
+    int instruction = stoi(instructionMemory[PC], 0, 16); // should be initialized to 0
     int mainIndex = 0;
     int lastPC = 0;
     // Move the instruction at the PC counter from the instruction memory to the IF stage
