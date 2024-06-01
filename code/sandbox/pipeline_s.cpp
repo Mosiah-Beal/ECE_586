@@ -95,7 +95,7 @@ void Pipeline::IF(int inputBin) {
     //FIXME: Remove once everything works
     if(instrFetched > 650) {
         cout << "We have surpassed the expected number of instructions" << endl;
-        criticalProblem = true;
+        //criticalProblem = true;
     }
 
 
@@ -462,12 +462,10 @@ void Pipeline::stall(void) {
 // Flush pipeline after misprediction
 void Pipeline::flush(void) {
 cout << "Flushing pipeline" << endl;
-flushFlag = true;
-stallCondition = true;
-if(flushCount == 0)
-	flushFlag = false; 
+flushFlag = true; 
 // clear the IF stage somehow
 stages[_ID].name = "NOP";
+stages[_IF].name = "NOP";
 }
 
 /**
@@ -684,7 +682,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
 
                 PC += metadata.bitmap->imm * 4;
-                PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                //PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		flush();
             }
 	    else {
@@ -697,7 +695,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
                 
                 PC += metadata.bitmap->imm * 4;
-                PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                //PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 		flush();
             }
 	    else {
@@ -709,7 +707,6 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << registers[metadata.bitmap->rs] << endl;
 
             PC = registers[metadata.bitmap->rs];
-            PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
 	        flush();
             break;
         default:
@@ -894,23 +891,19 @@ void Pipeline::moveStages(int line) {
     
     // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
-        /*if(flushFlag) {
+        if(flushFlag) {
             line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
             IF(line);
             flushFlag = false;
             return;
-        }*/
+        }
  
         IF(line); // Fetch instruction
- 	decrBusyRegs();
-	flushCount = 2;       
+ 	decrBusyRegs();       
         std::cout << endl;
         return;    
     }
-    if(flushFlag){
-	flushCount--;
-	stages[_ID].name = "NOP";
-    }
+
     decrBusyRegs();     // Decrement busy registers
     cout << endl;
     moveStages(line);   // Recursively call moveStages until the stall condition is false
