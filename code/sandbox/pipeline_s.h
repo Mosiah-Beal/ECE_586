@@ -56,7 +56,7 @@ private:
     int MDR;  // Memory Destination Register (load memory MEM stage)
     int PC;   // Program Counter
     int instrFetched;   // Number of instructions fetched
-    int flushCount;
+    int clk;
 
     bool flushFlag;         // Flag to flush pipeline
     bool stallCondition;    // Flag to stall pipeline

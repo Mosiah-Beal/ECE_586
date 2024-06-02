@@ -35,7 +35,7 @@ Pipeline::Pipeline() {
     MDR = 0;
     PC = 0;
     instrFetched = 0;
-
+    clk = 0; 
     stallCondition = false;
     criticalProblem = false;
     
@@ -201,7 +201,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
 
     //Jumps (return)
     if(metadata.bitmap->opcode > 13) {
-        cout << "\t[MEM]: Flush" << endl;
+        cout << " COMPLETE NOP" << endl;
         return;
     }
     
@@ -216,7 +216,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
 
         MDR = stoi(instructionMemory[ALUresult], 0, 16);
         cout << "\t[MEM]: MDR = " << MDR;
-        cout << "\t(ALUresult=" << ALUresult << ")" << endl;
+        cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
         return;
     }
     
@@ -272,23 +272,18 @@ void Pipeline::WB(instr_metadata &metadata) {
         return;
     }
 
-    if(metadata.bitmap->opcode > 13) {
-        cout << "\t[WB]: Flush" << endl;
-        return;
-    } 
-
-    cout << "[WB] ";
-    metadata.name = "NOP";
-    printInstruction(metadata);
-
     // Only LDW will reach this stage
     if (metadata.bitmap->opcode == 12) {
+    	cout << "[WB]: ";
+    	printInstruction(metadata);
         registers[metadata.bitmap->rt] = MDR;
         cout << "\t[WB]: R" << metadata.bitmap->rt << " = " << MDR;
         cout << "\t(R" << metadata.bitmap->rt << "=" << registers[metadata.bitmap->rt] << ")" << endl;
     }
+    else
+   	cout << "[WB]: NOP" << endl;
 
-
+ 
 
 }
 
@@ -321,6 +316,12 @@ void Pipeline::printReport() {
     }
 
     cout << endl;
+
+    
+    cout << "Clock Cycles: " << clk << endl;
+
+    cout << endl; 
+
 
     // return;
 
@@ -461,7 +462,7 @@ void Pipeline::stall(void) {
 
 // Flush pipeline after misprediction
 void Pipeline::flush(void) {
-cout << "Flushing pipeline" << endl;
+cout << "\tFLUSH PIPE" << endl;
 flushFlag = true; 
 // clear the IF stage somehow
 stages[_ID].name = "NOP";
@@ -655,7 +656,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
         case 12: // LDW //FIXME: Rs + imm
             ALUresult = registers[metadata.bitmap->rs] + metadata.bitmap->imm;
             cout << "\t[EX]: ALUresult = R" << metadata.bitmap->rs << " + " << metadata.bitmap->imm;
-            cout << "\t(ALUresult = " << ALUresult << ")" << endl;
+            cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
             if(ALUresult % 4 != 0) {
                 cout << "\t\tError: Memory address not aligned" << endl;
                 criticalProblem = true;
@@ -680,13 +681,14 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             if (registers[metadata.bitmap->rs] == 0) {
                 cout << "\t[EX]: Branching from " << PC << " to ";
                 cout << PC + metadata.bitmap->imm * 4 << endl;
-
                 PC += metadata.bitmap->imm * 4;
-                //PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                PC -= 8;    // Decrement the PC by 4 to account for the increment at the end of the cycle		
+                metadata.name = "NOP";
 		flush();
             }
 	    else {
 	    cout << "\tBRANCH NOT TAKEN" << endl;
+	    metadata.name = "NOP";
 	    }
             break;
         case 15: // BEQ
@@ -695,11 +697,13 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
                 cout << PC + metadata.bitmap->imm * 4 << endl;
                 
                 PC += metadata.bitmap->imm * 4;
-                //PC -= 4;    // Decrement the PC by 4 to account for the increment at the end of the cycle
+                PC -= 8;
+                metadata.name = "NOP";
 		flush();
             }
 	    else {
 	    cout << "\tBRANCH NOT TAKEN" << endl;
+	    metadata.name = "NOP";
 	    }
             break;
         case 16: // JR
@@ -707,7 +711,8 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << registers[metadata.bitmap->rs] << endl;
 
             PC = registers[metadata.bitmap->rs];
-	        flush();
+            metadata.name = "NOP";
+	    flush();
             break;
         default:
             cout << "Error: Invalid opcode" << endl;
@@ -716,7 +721,8 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             break;
     }
 
-    printf("\t[EX]: ALUresult: %d\n", ALUresult); 
+    if(metadata.bitmap->opcode < 14) 
+    	printf("\t[EX]: ALUresult: %d\n", ALUresult); 
     return metadata;
 }
 
@@ -895,16 +901,19 @@ void Pipeline::moveStages(int line) {
             line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
             IF(line);
             flushFlag = false;
+	    clk++;
             return;
         }
  
         IF(line); // Fetch instruction
- 	decrBusyRegs();       
+ 	decrBusyRegs();
+ 	clk++;       
         std::cout << endl;
         return;    
     }
 
     decrBusyRegs();     // Decrement busy registers
+    clk++;
     cout << endl;
     moveStages(line);   // Recursively call moveStages until the stall condition is false
 }
@@ -942,6 +951,7 @@ void Pipeline::run() {
         }
 
         moveStages(instruction);
+        
         instruction = stoi(instructionMemory[PC], 0, 16); // convert to int for parsing
 
         // Check if PC is incrementing
