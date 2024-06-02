@@ -16,6 +16,7 @@ Section 5 user functions
 #include <iostream>
 using namespace std;
 #include <vector>
+#include <sstream>
 
 //constructor (public) 
 //this initializes the Pipeline class
@@ -183,6 +184,11 @@ void Pipeline::EX(instr_metadata &metadata) {
 
 //Memory Operations
 void Pipeline::MEM(instr_metadata &metadata) {
+     
+    int tempRegister;
+    stringstream registerString;
+    string hexString;
+	
     // Check for nop
     if (metadata.name == "NOP") {
         cout << "[MEM]: NOP" << endl;
@@ -228,20 +234,20 @@ void Pipeline::MEM(instr_metadata &metadata) {
             criticalProblem = true;
             metadata.name += " Error" ;
             printFields(metadata);
-        }
+        }	
 
-        // Allocate memory for the string to store in memory
-	    char *p = (char *)malloc(sizeof(char)*(9));
+	//Convert int to string
+	tempRegister = registers[metadata.bitmap->rt];
+	registerString << hex << tempRegister; 
+	hexString = registerString.str(); 
 
-        // Convert the integer in RT to a hex string
-	    sprintf(p, "%0X", registers[metadata.bitmap->rt]);
 
         // Store the string in memory
-        instructionMemory[ALUresult] = *p;
+        instructionMemory[ALUresult] = hexString;
         changedMemory[ALUresult] = registers[metadata.bitmap->rt];
         cout << "\t[MEM] Memory[" << ALUresult << "] = " << instructionMemory[ALUresult];
         cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
-        cout << "\t[MEM] *p: " << *p << endl;
+        cout << "\t[MEM] VALUE: " << hexString << endl;
         return;
     }
 
@@ -796,25 +802,25 @@ void Pipeline::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
-    setInstruction("ADD", 0, 0, 1, 4); // ADD
-    setInstruction("SUB", 2, 0, 1, 4); // SUB
-    setInstruction("MUL", 4, 0, 1, 4); // MUL
-    setInstruction("OR", 6, 1, 1, 4); // OR
-    setInstruction("AND", 8, 1, 1, 4); // AND
-    setInstruction("XOR", 10, 1, 1, 4); // XOR
+    setInstruction("ADD", 0, 0, 1, 3); // ADD
+    setInstruction("SUB", 2, 0, 1, 3); // SUB
+    setInstruction("MUL", 4, 0, 1, 3); // MUL
+    setInstruction("OR", 6, 1, 1, 3); // OR
+    setInstruction("AND", 8, 1, 1, 3); // AND
+    setInstruction("XOR", 10, 1, 1, 3); // XOR
 
     setInstruction("LDW", 12, 2, 0, 4); // LDW
-    setInstruction("STW", 13, 2, 0, 4); // STW
-    setInstruction("ADDI", 1, 0, 0, 4); // ADDI
-    setInstruction("SUBI", 3, 0, 0, 4); // SUBI
-    setInstruction("MULI", 5, 0, 0, 4); // MULI
-    setInstruction("ORI", 7, 1, 0, 4); // ORI
-    setInstruction("ANDI", 9, 1, 0, 4); // ANDI
-    setInstruction("XORI", 11, 1, 0, 4); // XORI
-    setInstruction("BEQ", 15, 3, 0, 4); // BEQ
-    setInstruction("BZ", 14, 3, 0, 4); // BZ
-    setInstruction("JR", 16, 3, 0, 4); // JR
-    setInstruction("HALT", 17, 3, 0, 4); // HALT
+    setInstruction("STW", 13, 2, 0, 3); // STW
+    setInstruction("ADDI", 1, 0, 0, 2); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 2); // SUBI
+    setInstruction("MULI", 5, 0, 0, 2); // MULI
+    setInstruction("ORI", 7, 1, 0, 2); // ORI
+    setInstruction("ANDI", 9, 1, 0, 2); // ANDI
+    setInstruction("XORI", 11, 1, 0, 2); // XORI
+    setInstruction("BEQ", 15, 3, 0, 2); // BEQ
+    setInstruction("BZ", 14, 3, 0, 2); // BZ
+    setInstruction("JR", 16, 3, 0, 2); // JR
+    setInstruction("HALT", 17, 3, 0, 0); // HALT
 }
 
 
@@ -970,15 +976,16 @@ void Pipeline::run() {
 
     } while ((PC * 0.25) < (int) instructionMemory.size());   // Continue until HALT is found or PC exceeds the instruction memory range
     cout << "[Main]: HALT instruction found\n\n\n" << endl;
-
+    
     // Empty the pipeline of any remaining instructions
-    for(int i = 0; i < 5; i++){
-        moveStages(0);
+    for(int i = 0; i < 3; i++){
+        moveStages(instruction);
+	instruction = stoi(instructionMemory[PC], 0, 16);
     }
 
-    // decrement the typeExecd for arithmetic instructions by 5 since we are flushing by adding 0 to 0
-    typeExecd[0] -= 5;
-    PC -= 16;
+    // decrement the typeExecd for arithmetic instructions by 4 since we are flushing by adding 0 to 0
+    //typeExecd[0] -= 5;
+    PC -= 8;
 
     // stall 5 cycles to flush the pipeline
     printExecutionReport();
