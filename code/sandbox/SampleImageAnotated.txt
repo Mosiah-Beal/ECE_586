@@ -11,8 +11,8 @@
 30440000 LDW rs 2 rt 4 rd 0 imm_rd 0        //R4 = mem[R2 + 0]              @40     #R4 = mem[R2]
 08642800 SUB rs 3 rt 4 rd 5 imm_rd 0        //R5 = R3 - R4                  @44     #R5 = mem[R1] - mem[R2]
 24A60001 ANDI rs 5 rt 6 rd 0 imm_rd 1       //R6 = R5 & 1                   @48     #R6 = R5
-38C00002 BZ rs 6 rt 0 rd 0 imm_rd 2	        //branch[+=2] if R6 = 0         @52     #Branch to 68
-04E70001 ADD rs 2 rt 14 rd 14 imm_rd 0      //R14 = R14 + R2                @56     #R14 = R2
+38C00002 BZ rs 6 rt 0 rd 0 imm_rd 2	    //branch[+=2] if R6 = 0         @52     #Branch to 68
+04E70001 ADDI rs 0 rt 7 rd 7 imm_rd 1      //R7 = R7 + 1                    @56     #R7 += 1
 01034000 ADD rs 8 rt 3 rd 8 imm_rd 0        //R8 = R8 + R3                  @60     #R8 = mem[R1]
 01244800 ADD rs 9 rt 4 rd 9 imm_rd 0	    //R9 = R9 + R4                  @64     #R9 = mem[1200]
 04210004 ADDI rs 1 rt 1 rd 0 imm_rd 4       //R1 = R1 + 4                   @68     #R1 += 4

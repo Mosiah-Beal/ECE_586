@@ -475,6 +475,7 @@ void Pipeline::flush(void) {
 cout << "\tFLUSH PIPE" << endl;
 flushFlag = true; 
 // clear the IF stage somehow
+clk = clk+1 ;
 stages[_ID].name = "NOP";
 stages[_IF].name = "NOP";
 }
