@@ -224,7 +224,7 @@ void Pipeline::MEM(instr_metadata &metadata) {
             printFields(metadata);
         }
 
-        MDR = stoi(instructionMemory[ALUresult], 0, 16);
+        MDR = stoul(instructionMemory[ALUresult], 0, 16);
         cout << "\t[MEM]: MDR = " << MDR;
         cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
         return;
@@ -969,7 +969,7 @@ int Pipeline::checkHalt(int bin) {
 
 void Pipeline::run() {
 
-    int instruction = stoi(instructionMemory[PC], 0, 16); // should be initialized to 0
+    uint32_t instruction = stoul(instructionMemory[PC], 0, 16); // should be initialized to 0
     int mainIndex = 0;
     int lastPC = 0;
     // Move the instruction at the PC counter from the instruction memory to the IF stage
@@ -990,7 +990,7 @@ void Pipeline::run() {
 
         moveStages(instruction);
         
-        instruction = stoi(instructionMemory[PC], 0, 16); // convert to int for parsing
+        instruction = stoul(instructionMemory[PC], 0, 16); // convert to int for parsing
 
         // Check if PC is incrementing
         if((lastPC == PC) && mainIndex > 10) {
@@ -1010,7 +1010,7 @@ void Pipeline::run() {
     // Empty the pipeline of any remaining instructions
     for(int i = 0; i < 3; i++){
         moveStages(instruction);
-	instruction = stoi(instructionMemory[PC], 0, 16);
+	instruction = stoul(instructionMemory[PC], 0, 16);
     }
 
     // decrement the typeExecd for arithmetic instructions by 4 since we are flushing by adding 0 to 0
