@@ -475,7 +475,7 @@ void Pipeline::flush(void) {
 cout << "\tFLUSH PIPE" << endl;
 flushFlag = true; 
 // clear the IF stage somehow
-clk = clk+1 ;
+clk++;
 stages[_ID].name = "NOP";
 stages[_IF].name = "NOP";
 }
@@ -1016,7 +1016,7 @@ void Pipeline::run() {
     // decrement the typeExecd for arithmetic instructions by 4 since we are flushing by adding 0 to 0
     //typeExecd[0] -= 5;
     PC -= 8;
-
+    clk = clk + 2;
     // stall 5 cycles to flush the pipeline
     printExecutionReport();
 }
