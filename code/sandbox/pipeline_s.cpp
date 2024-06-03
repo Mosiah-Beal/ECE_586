@@ -939,7 +939,7 @@ void Pipeline::moveStages(int line) {
     // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
         if(flushFlag) {
-            line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
+            line = stoul(instructionMemory[PC], 0, 16); // Fetch new instruction
             IF(line);
             flushFlag = false;
             return;
