@@ -1,3 +1,20 @@
+/**
+ * @file pipeline_s.h
+ * @Header file for MIPS-lite Pipeline Simulator
+ * 
+ * This file contains the definitions and structures required for simulating 
+ * the MIPS-lite pipeline. It includes class definitions, function prototypes,
+ * and data structures for instruction handling and pipeline management.
+ * 
+ * @authors
+ * Arie Jorritsma <ajorrit2@pdx.edu>
+ * Mosiah Beal <mosiah@pdx.edu>
+ * Lynn Nguyen <diemhan@pdx.edu>
+ * Wa'el Alkalbani <wael@pdx.edu>
+ *
+ */
+
+
 #ifndef PIPELINE_S_H
 #define PIPELINE_S_H
 

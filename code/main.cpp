@@ -1,3 +1,21 @@
+/**
+ * @file main.cpp
+ * @MIPS-lite Pipeline Simulator Main Program
+ * 
+ * This file contains the main function for the MIPS-lite pipeline simulator.
+ * It initializes the simulator, loads the instruction file, and runs the simulation.
+ * The program is designed to emulate the behavior of a simplified MIPS processor,
+ * focusing on key instruction types and pipeline management techniques.
+ * 
+ * @authors
+ * Arie Jorritsma <ajorrit2@pdx.edu>
+ * Mosiah Beal <mosiah@pdx.edu>
+ * Lynn Nguyen <diemhan@pdx.edu>
+ * Wa'el Alkalbani <wael@pdx.edu>
+ *
+ */
+
+
 #include "pipeline_s.h"
 #include <iostream>
 #include <fstream>

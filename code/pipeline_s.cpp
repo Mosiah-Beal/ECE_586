@@ -1,15 +1,30 @@
 /**
-Table of Contents 
-Section 1 Stage functions line 36
-IF line 38
-ID line 
-EX line
-
-Section 2 Helper functions
-Section 3 Pipeline control
-Section 4 Control functions
-Section 5 user functions
-**/
+ * @file pipeline_s.cpp
+ * @Implementation of MIPS-lite Pipeline Simulator Functions
+ * 
+ * This file contains the implementation of the MIPS-lite pipeline simulator.
+ * It includes the main functions that handle different pipeline stages (IF, ID, EX, MEM, WB),
+ * helper functions, pipeline control functions, and user functions to simulate
+ * the behavior of a simplified MIPS processor.
+ * 
+ * Table of Contents 
+ * Section 1: Stage functions (line 36)
+ *   - IF (Instruction Fetch): line 38
+ *   - ID (Instruction Decode): line 
+ *   - EX (Execute): line
+ * 
+ * Section 2: Helper functions
+ * Section 3: Pipeline control
+ * Section 4: Control functions
+ * Section 5: User functions
+ * 
+ * @authors
+ * Arie Jorritsma <ajorrit2@pdx.edu>
+ * Mosiah Beal <mosiah@pdx.edu>
+ * Lynn Nguyen <diemhan@pdx.edu>
+ * Wa'el Alkalbani <wael@pdx.edu>
+ *
+ */
 
 
 #include "pipeline_s.h"
