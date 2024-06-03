@@ -752,12 +752,12 @@ void Pipeline::Hazards(void) {
 
     if(!stages[_ID].addressMode){
         rsBusy = busyRegs[stages[_ID].bitmap->rs];
-       // rtBusy = busyRegs[stages[_ID].bitmap->rt];
+        rtBusy = busyRegs[stages[_ID].bitmap->rt];
     }
     else{
         rsBusy = busyRegs[stages[_ID].bitmap->rs];
         rtBusy = busyRegs[stages[_ID].bitmap->rt];
-       // rdBusy = busyRegs[stages[_ID].bitmap->rd];
+        rdBusy = busyRegs[stages[_ID].bitmap->rd];
     }
 
     printBusyRegs();
@@ -917,7 +917,7 @@ SECTION 5 User functions
 void Pipeline::moveStages(int line) {
 
     clk++;
-
+    decrBusyRegs();
     stages[_WB] = stages[_MEM]; // Pull instruction from MEM to WB
     WB(stages[_WB]);// Writeback the instruction pulled in this stage
     
@@ -945,12 +945,12 @@ void Pipeline::moveStages(int line) {
         }
  
         IF(line); // Fetch instruction
- 	decrBusyRegs();       
+ 	//decrBusyRegs();       
         std::cout << endl;
         return;    
     }
 
-    decrBusyRegs();     // Decrement busy registers
+    //decrBusyRegs();     // Decrement busy registers
     cout << endl;
     moveStages(line);   // Recursively call moveStages until the stall condition is false
 }
