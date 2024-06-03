@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+int mode = 0;
+
 std::string createBinaryInstruction(int param1, int param2, int param3, int param4);
 void printFields(std::string binaryInstruction);
 void testBinaryInstructions();
@@ -14,17 +16,14 @@ int main(int argc, char* argv[]) {
     // testBinaryInstructions();
     // return 0;
 
-
-
-
-    // Initialize the pipeline
-    Pipeline pipeline;
-
-    // Error checking for command line arguments
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <filename>\n";
+   if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <filename> <forwarding>\n";
         return 1;
     }
+
+    
+    
+    	
 
     // Load trace file 
     std::string fileName = std::string(argv[1]);
@@ -35,7 +34,17 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: could not open file " << fileName << std::endl;
         return 1;
     }
-
+    
+    if((argc == 3) && (std::string(argv[2]) == "forwarding")){
+    	
+    	mode = 1;
+    }
+   
+    
+    // Initialize the pipeline
+    Pipeline pipeline(mode);
+    
+    
     std::vector<std::string> fileImage;
 
     // Read each line of the trace file
@@ -135,7 +144,7 @@ void printFields(std::string binaryInstruction) {
 
 void testBinaryInstructions() {
 
-    Pipeline pipeline2;
+    Pipeline pipeline2(mode);
 
     // make a new vector of instructions for testing
     std::vector<std::string> testInstructions;

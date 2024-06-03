@@ -20,8 +20,11 @@ using namespace std;
 
 //constructor (public) 
 //this initializes the Pipeline class
-Pipeline::Pipeline() {
+Pipeline::Pipeline(int mode) {
 
+
+    this->setForwardingFlag(mode);
+    
     // cout << "Pipeline object created" << endl;
     defineInstSet();
     numStalls = 0;      // Initialize number of stalls to 0
@@ -39,6 +42,7 @@ Pipeline::Pipeline() {
     clk = 0; 
     stallCondition = false;
     criticalProblem = false;
+     
     
 
     // clear memory
@@ -748,12 +752,12 @@ void Pipeline::Hazards(void) {
 
     if(!stages[_ID].addressMode){
         rsBusy = busyRegs[stages[_ID].bitmap->rs];
-        rtBusy = busyRegs[stages[_ID].bitmap->rt];
+       // rtBusy = busyRegs[stages[_ID].bitmap->rt];
     }
     else{
         rsBusy = busyRegs[stages[_ID].bitmap->rs];
         rtBusy = busyRegs[stages[_ID].bitmap->rt];
-        rdBusy = busyRegs[stages[_ID].bitmap->rd];
+       // rdBusy = busyRegs[stages[_ID].bitmap->rd];
     }
 
     printBusyRegs();
@@ -802,25 +806,52 @@ void Pipeline::defineInstSet() {
      * Address mode:
      * 0 = immediate, 1 = register
      */
+
+    if(forwardingFlag) {
+
+    setInstruction("ADD", 0, 0, 1, 0); // ADD
+    setInstruction("SUB", 2, 0, 1, 0); // SUB
+    setInstruction("MUL", 4, 0, 1, 0); // MUL
+    setInstruction("OR", 6, 1, 1, 0); // OR
+    setInstruction("AND", 8, 1, 1, 0); // AND
+    setInstruction("XOR", 10, 1, 1, 0); // XOR
+    setInstruction("LDW", 12, 2, 0, 2); // LDW
+    setInstruction("STW", 13, 2, 0, 1); // STW
+    setInstruction("ADDI", 1, 0, 0, 0); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 0); // SUBI
+    setInstruction("MULI", 5, 0, 0, 0); // MULI
+    setInstruction("ORI", 7, 1, 0, 0); // ORI
+    setInstruction("ANDI", 9, 1, 0, 0); // ANDI
+    setInstruction("XORI", 11, 1, 0, 0); // XORI
+    setInstruction("BEQ", 15, 3, 0, 0); // BEQ
+    setInstruction("BZ", 14, 3, 0, 0); // BZ
+    setInstruction("JR", 16, 3, 0, 0); // JR
+    setInstruction("HALT", 17, 3, 0, 0); // HALT
+    }
+
+    else if (!forwardingFlag) { 
     setInstruction("ADD", 0, 0, 1, 3); // ADD
     setInstruction("SUB", 2, 0, 1, 3); // SUB
     setInstruction("MUL", 4, 0, 1, 3); // MUL
     setInstruction("OR", 6, 1, 1, 3); // OR
     setInstruction("AND", 8, 1, 1, 3); // AND
     setInstruction("XOR", 10, 1, 1, 3); // XOR
-
-    setInstruction("LDW", 12, 2, 0, 4); // LDW
+    setInstruction("LDW", 12, 2, 0, 3); // LDW
     setInstruction("STW", 13, 2, 0, 3); // STW
-    setInstruction("ADDI", 1, 0, 0, 2); // ADDI
-    setInstruction("SUBI", 3, 0, 0, 2); // SUBI
-    setInstruction("MULI", 5, 0, 0, 2); // MULI
-    setInstruction("ORI", 7, 1, 0, 2); // ORI
-    setInstruction("ANDI", 9, 1, 0, 2); // ANDI
-    setInstruction("XORI", 11, 1, 0, 2); // XORI
-    setInstruction("BEQ", 15, 3, 0, 2); // BEQ
-    setInstruction("BZ", 14, 3, 0, 2); // BZ
-    setInstruction("JR", 16, 3, 0, 2); // JR
-    setInstruction("HALT", 17, 3, 0, 0); // HALT
+    setInstruction("ADDI", 1, 0, 0, 3); // ADDI
+    setInstruction("SUBI", 3, 0, 0, 3); // SUBI
+    setInstruction("MULI", 5, 0, 0, 3); // MULI
+    setInstruction("ORI", 7, 1, 0, 3); // ORI
+    setInstruction("ANDI", 9, 1, 0, 3); // ANDI
+    setInstruction("XORI", 11, 1, 0, 3); // XORI
+    setInstruction("BEQ", 15, 3, 0, 3); // BEQ
+    setInstruction("BZ", 14, 3, 0, 3); // BZ
+    setInstruction("JR", 16, 3, 0, 3); // JR
+    setInstruction("HALT", 17, 3, 0, 3); // HALT
+    }
+    
+    else
+    	printf("ERROR selecting mode");
 }
 
 
@@ -885,6 +916,7 @@ SECTION 5 User functions
 
 void Pipeline::moveStages(int line) {
 
+    clk++;
 
     stages[_WB] = stages[_MEM]; // Pull instruction from MEM to WB
     WB(stages[_WB]);// Writeback the instruction pulled in this stage
@@ -909,19 +941,16 @@ void Pipeline::moveStages(int line) {
             line = stoi(instructionMemory[PC], 0, 16); // Fetch new instruction
             IF(line);
             flushFlag = false;
-	    clk++;
             return;
         }
  
         IF(line); // Fetch instruction
- 	decrBusyRegs();
- 	clk++;       
+ 	decrBusyRegs();       
         std::cout << endl;
         return;    
     }
 
     decrBusyRegs();     // Decrement busy registers
-    clk++;
     cout << endl;
     moveStages(line);   // Recursively call moveStages until the stall condition is false
 }
@@ -1013,3 +1042,6 @@ void Pipeline::initNOPs(void) {
 
 }
 
+void Pipeline::setForwardingFlag(int mode) {
+    forwardingFlag = mode;
+}

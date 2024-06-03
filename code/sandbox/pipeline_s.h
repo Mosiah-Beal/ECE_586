@@ -61,14 +61,14 @@ private:
     bool flushFlag;         // Flag to flush pipeline
     bool stallCondition;    // Flag to stall pipeline
     bool criticalProblem;   // Flag to halt pipeline
-
+    int forwardingFlag;
    
 
     std::vector<int> registers;  // Registers
     std::vector<int> typeExecd;   // Number of times each instruction type was executed
     
     //maps
- 	public:
+    public: 
     std::map<int, int> changedMemory;               // Memory <address, value>
     std::map<int, instr_metadata> instructionSet;   // Instruction set
     std::map<int, std::string> instructionMemory;   // Instruction memory <address, instruction>
@@ -109,9 +109,9 @@ private:
     instr_metadata getInstruction(int opcode); // Get instruction by opcode
     void internalPipeMove(int sourceIndex, int destIndex); // Move instruction from source to dest stage
 
-public:
+    public:
     //constructor + deconstructor
-    Pipeline();
+    Pipeline(int mode);
     ~Pipeline();
 
     //user functions
@@ -120,7 +120,7 @@ public:
     void run();                     // Run the pipeline (one instruction at a time for now)
     void printExecutionReport();    // print public method
     void initNOPs(); // Initialize NOPs in stages
-
+    void setForwardingFlag(int mode);
     //public maps + vectors
     std::vector<instr_metadata> stages;    // Holds instructions in each stage
     std::map<int, int> busyRegs;        // Holds register values in use (sta    ll cycles needed)
