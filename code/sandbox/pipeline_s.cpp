@@ -17,6 +17,7 @@ Section 5 user functions
 using namespace std;
 #include <vector>
 #include <sstream>
+#include <stdint.h>
 
 //constructor (public) 
 //this initializes the Pipeline class
@@ -224,7 +225,17 @@ void Pipeline::MEM(instr_metadata &metadata) {
             printFields(metadata);
         }
 
-        MDR = stoul(instructionMemory[ALUresult], 0, 16);
+        string tempString = instructionMemory[ALUresult];
+        if(tempString.compare("") == 0) {
+            cout << "\t\tError: Memory address not initialized" << endl;
+            metadata.name += " Error" ;
+            printFields(metadata);
+            tempString = "00000000";
+        }
+
+        cout << "\t[MEM]: tempStr = " << tempString << endl;
+
+        MDR = stoul(tempString, 0, 16);
         cout << "\t[MEM]: MDR = " << MDR;
         cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
         return;
@@ -240,18 +251,13 @@ void Pipeline::MEM(instr_metadata &metadata) {
             printFields(metadata);
         }	
 
-	//Convert int to string
-	tempRegister = registers[metadata.bitmap->rt];
-	registerString << hex << tempRegister; 
-	hexString = registerString.str(); 
+	    //Convert int to string
+    	tempRegister = registers[metadata.bitmap->rt];
 
 
         // Store the string in memory
-        instructionMemory[ALUresult] = hexString;
+        instructionMemory[ALUresult] = tempRegister;
         changedMemory[ALUresult] = registers[metadata.bitmap->rt];
-        cout << "\t[MEM] Memory[" << ALUresult << "] = " << instructionMemory[ALUresult];
-        cout << "\t(ADDRESS = " << ALUresult << ")" << endl;
-        cout << "\t[MEM] VALUE: " << hexString << endl;
         return;
     }
 
@@ -561,9 +567,10 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
         metadata.bitmap->rd = 0; // No destination register for immediate addressing
         metadata.bitmap->imm = metadata.bin_bitmap & 0xFFFF;
 
-//Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
+        //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if (metadata.bitmap->imm & 0x8000) {
             metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
+            metadata.bitmap->imm &= 0xFFFF;
         }
 
   #ifdef DEBUG
