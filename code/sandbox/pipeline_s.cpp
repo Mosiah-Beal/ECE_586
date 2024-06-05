@@ -114,6 +114,59 @@ void Pipeline::IF(int inputBin) {
 
 }
 
+void Pipeline::IF(string inputBin) {
+    
+    if(inputBin.length() != 32) {
+        // Convert hex string to binary string
+        string binaryString = "";
+        for (int i = 0; i < (int) inputBin.size(); i++) {
+            switch (toupper(inputBin[i])) {
+                case '0': binaryString += "0000"; break;
+                case '1': binaryString += "0001"; break;
+                case '2': binaryString += "0010"; break;
+                case '3': binaryString += "0011"; break;
+                case '4': binaryString += "0100"; break;
+                case '5': binaryString += "0101"; break;
+                case '6': binaryString += "0110"; break;
+                case '7': binaryString += "0111"; break;
+                case '8': binaryString += "1000"; break;
+                case '9': binaryString += "1001"; break;
+                case 'A': binaryString += "1010"; break;
+                case 'B': binaryString += "1011"; break;
+                case 'C': binaryString += "1100"; break;
+                case 'D': binaryString += "1101"; break;
+                case 'E': binaryString += "1110"; break;
+                case 'F': binaryString += "1111"; break;
+            }
+        }
+        inputBin = binaryString;
+    }
+    
+    
+    
+    int opcode = getOpcode(inputBin); // get the opcode from the line
+    instr_metadata metadata = getInstruction(opcode);   // Fill the metadata for the instruction
+    
+    // make a new metadata object which will persist through the stages
+    instr_metadata* metadataPtr = new instr_metadata;
+
+    // Copy the metadata to the pointer
+    metadataPtr->name = metadata.name;
+    metadataPtr->type = metadata.type;
+    metadataPtr->addressMode = metadata.addressMode;
+    metadataPtr->bitmap = new Bitmap;
+    metadataPtr->len = metadata.len;
+    if(!stallCondition) 
+    	metadataPtr->instructionNumber = instrFetched++; // store instruction number
+    
+    metadataPtr->originalLine = inputBin;   // store binary representation of instruction 
+    
+    printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
+    stages[_IF] = *metadataPtr; // store instruction in IF stage
+    PC += 4; // increment program counter
+
+}
+
 //Instruction Decode
 void Pipeline::ID(instr_metadata &metadata) {
     // check for NOP (initialization)
@@ -560,27 +613,41 @@ void Pipeline::decrBusyRegs(void) {
 
 //Decode Instruction
 instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
+    
+    // Extract the original binary instruction
+    string binString = metadata.originalLine;
+    string opcodeString = binString.substr(0, 6);
+    string rsString = binString.substr(6, 5);
+    string rtString = binString.substr(11, 5);
+    string rdString = binString.substr(16, 5);
+    string immString = binString.substr(16, 16);
+
+    // Set the common fields
+    metadata.bitmap->opcode = getOpcode(binString);
+    metadata.bitmap->rs = stoi(rsString, 0, 2);
+    metadata.bitmap->rt = stoi(rtString, 0, 2);
+
     if (metadata.addressMode == 0) { // Immediate addressing
-        metadata.bitmap->opcode = getOpcode(metadata.bin_bitmap);
-        metadata.bitmap->rs = (metadata.bin_bitmap & 0x3E00000) >> 21;
-        metadata.bitmap->rt = (metadata.bin_bitmap & 0x1F0000) >> 16;
         metadata.bitmap->rd = 0; // No destination register for immediate addressing
-        metadata.bitmap->imm = metadata.bin_bitmap & 0xFFFF;
+        metadata.bitmap->imm = stoi(immString, 0, 2);
+
+        cout << "Before 2's complement:" << endl;
+        cout << "Immediate value: " << metadata.bitmap->imm << endl;
+        cout << "Immediate string: " << immString << endl;
 
         //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
-        if (metadata.bitmap->imm & 0x8000) {
-            metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
-            metadata.bitmap->imm &= 0xFFFF;
+        if(immString[0] == '1') {
+            metadata.bitmap->imm = - stoi(immString.substr(1), 0, 2);
         }
+
+        cout << "After 2's complement:" << endl;
+        cout << "Immediate value: " << metadata.bitmap->imm << endl;
 
   #ifdef DEBUG
 printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadata.bitmap->rs, metadata.bitmap->imm);
  #endif
     } else { // Register addressing
-        metadata.bitmap->opcode = getOpcode(metadata.bin_bitmap);
-        metadata.bitmap->rs = (metadata.bin_bitmap & 0x03E00000) >> 21;
-        metadata.bitmap->rt = (metadata.bin_bitmap & 0x001F0000) >> 16;
-        metadata.bitmap->rd = (metadata.bin_bitmap & 0x0000F800) >> 11;
+        metadata.bitmap->rd = stoi(rdString, 0, 2);
         metadata.bitmap->imm = 0; // No immediate value for register addressing
 
    #ifdef DEBUG
@@ -891,6 +958,33 @@ int Pipeline::getOpcode(int trace) {
     return opcode;
 }
 
+int Pipeline::getOpcode(string trace) {
+
+    // determine if string is 8 (hex) or 32 (binary) bits
+    if(trace.length() == 8) {
+        
+        // opcode is in the upper 6 bits of the binary representation
+        int opcode = stoul(trace, 0, 16) >> 26;
+        string opcodeStr = trace.substr(0, 2);
+        int opcodeInt = stoi(opcodeStr, 0, 16);
+
+        cout << "[DEBUG - getOpcode]: Opcode (stoul): " << opcode << endl;
+        cout << "[DEBUG - getOpcode]: Opcode (string conversion): " << opcodeInt << endl;
+        return opcodeInt;
+    }
+    else if(trace.length() == 32) {
+        // opcode is in the upper 6 bits of the binary representation
+        string opcodeStr = trace.substr(0, 6);
+        int opcodeInt = stoi(opcodeStr, 0, 2);
+        cout << "[DEBUG - getOpcode]: Opcode (binary): " << opcodeInt << endl;
+        return opcodeInt;
+    }
+
+
+        
+    return 18; // Return an error code if the opcode is not found
+}
+
 /**
  * @brief Based on an instruction's op code, this function determines what instruction it is, as 
  * well as its addressing mode and type
@@ -924,7 +1018,7 @@ SECTION 5 User functions
 --------------------------------------------------------------------------------------------*/
 
 
-void Pipeline::moveStages(int line) {
+void Pipeline::moveStages(string line) {
 
     clk++;
     decrBusyRegs();
@@ -948,7 +1042,7 @@ void Pipeline::moveStages(int line) {
     // call IF to fill IF stage if we are not stalling
     if(!stallCondition) {
         if(flushFlag) {
-            line = stoul(instructionMemory[PC], 0, 16); // Fetch new instruction
+            line = instructionMemory[PC]; // Fetch new instruction
             IF(line);
             flushFlag = false;
             return;
@@ -979,6 +1073,7 @@ int Pipeline::checkHalt(int bin) {
 void Pipeline::run() {
 
     uint32_t instruction = stoul(instructionMemory[PC], 0, 16); // should be initialized to 0
+    string instr = instructionMemory[PC];
     int mainIndex = 0;
     int lastPC = 0;
     // Move the instruction at the PC counter from the instruction memory to the IF stage
@@ -997,9 +1092,10 @@ void Pipeline::run() {
             break;
         }
 
-        moveStages(instruction);
+        moveStages(instr);
         
-        instruction = stoul(instructionMemory[PC], 0, 16); // convert to int for parsing
+        // instruction = stoul(instructionMemory[PC], 0, 16); // convert to int for parsing
+        instr = instructionMemory[PC];
 
         // Check if PC is incrementing
         if((lastPC == PC) && mainIndex > 10) {
@@ -1008,8 +1104,11 @@ void Pipeline::run() {
         }
 
         // Cheat to end execution if we go past what we expect the instruction memory range to be
-        if(PC>200)
-		break;
+        if(PC>4096 || PC < -4)
+        {
+            cout << "Error: PC out of bounds" << endl;
+            break;
+        }
  
         lastPC = PC;
 
@@ -1018,8 +1117,10 @@ void Pipeline::run() {
     
     // Empty the pipeline of any remaining instructions
     for(int i = 0; i < 3; i++){
-        moveStages(instruction);
-	instruction = stoul(instructionMemory[PC], 0, 16);
+        // moveStages(instruction);
+        moveStages(instr);
+    	// instruction = stoul(instructionMemory[PC], 0, 16);
+        instr = instructionMemory[PC];
     }
 
     // decrement the typeExecd for arithmetic instructions by 4 since we are flushing by adding 0 to 0

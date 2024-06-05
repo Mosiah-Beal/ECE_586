@@ -86,9 +86,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    instructionDecode(fileImage);
+    // instructionDecode(fileImage);
 
-    // pipeline.run();
+    pipeline.run();
     return 0;
 
 }
@@ -173,7 +173,7 @@ void testBinaryInstructions() {
     for (int i = 0; i < (int) testInstructions.size(); i++) {
         // std::cout << testInstructions.at(i) << std::endl;
 
-        pipeline2.moveStages(std::stoi(testInstructions.at(i), 0, 2));
+        // pipeline2.moveStages(std::stoi(testInstructions.at(i), 0, 2));
     }
 
     pipeline2.printExecutionReport();
@@ -183,7 +183,7 @@ void testBinaryInstructions() {
     std::string nop = createBinaryInstruction(18, 0, 0, 0);
 
     for(int i = 0; i < 5; i++) {
-        pipeline2.moveStages(std::stoi(nop, 0, 2));
+        // pipeline2.moveStages(std::stoi(nop, 0, 2));
     }
 
     pipeline2.printExecutionReport();
@@ -193,6 +193,7 @@ void testBinaryInstructions() {
 
 
 void instructionDecode(const vector<string>& fileImage){
+    Pipeline pipeline(0);
     int opcode;
     int addressMode;
     int rs;
@@ -201,7 +202,8 @@ void instructionDecode(const vector<string>& fileImage){
     int imm;
 
     for (auto& str : fileImage){
-
+        cout << str << ": " << endl;
+        
         // Convert hex string to binary string
         string binaryString = "";
         for (int i = 0; i < (int) str.size(); i++) {
@@ -224,10 +226,18 @@ void instructionDecode(const vector<string>& fileImage){
                 case 'F': binaryString += "1111"; break;
             }
         }
-        cout << str << ": " << endl;
-        printFields(binaryString);
 
-        
+        printFields(binaryString);
+        pipeline.getOpcode(binaryString);
+        int opcodeTest = pipeline.getOpcode(binaryString);
+        instr_metadata instr = pipeline.getInstruction(opcodeTest);
+        pipeline.printFields(instr);
+
+        pipeline.IF(binaryString);
+        pipeline.ID(pipeline.stages[0]);
+
+
+
         int bitmap = stoul(str, 0, 16);
 
         opcode = bitmap >> 26;

@@ -75,6 +75,7 @@ private:
     std::map<int, int> opcodeHeatMap;               // <Opcode, number of times executed>
 
     private:
+    public:
 
     // Stage functions
     void IF(int inputBin);          // Instruction Fetch
@@ -83,6 +84,8 @@ private:
     void MEM(instr_metadata &metadata);    // Memory
     void WB(instr_metadata &metadata);     // Writeback
 
+    void IF(string inputBin);
+    
     // Helper functions
     void printStages();
     void printBusyRegs();   // Print the busy registers
@@ -106,6 +109,7 @@ private:
     void defineInstSet();      // Define the instruction set
     void setInstruction(std::string instrName, int opcode, int type, bool addressMode, int len);
     int getOpcode(int bin);         // Get the opcode from the binary instruction
+    int getOpcode(std::string instr); // Get the opcode from the binary / hex instruction
     instr_metadata getInstruction(int opcode); // Get instruction by opcode
     void internalPipeMove(int sourceIndex, int destIndex); // Move instruction from source to dest stage
 
@@ -116,6 +120,7 @@ private:
 
     //user functions
     void moveStages(int bin);       // Move instructions to next stage
+    void moveStages(string hex);    // Move instructions to next stage
     int checkHalt(int bin);         // Determine if we have hit a halt instruction
     void run();                     // Run the pipeline (one instruction at a time for now)
     void printExecutionReport();    // print public method
