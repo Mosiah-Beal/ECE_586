@@ -730,6 +730,8 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             cout << "\t[EX]: Jumping from " << PC << " to ";
             cout << registers[metadata.bitmap->rs] << endl;
 
+            printFields(metadata);
+
             PC = registers[metadata.bitmap->rs];
             metadata.name = "NOP";
 	    flush();

@@ -9,6 +9,7 @@ int mode = 0;
 std::string createBinaryInstruction(int param1, int param2, int param3, int param4);
 void printFields(std::string binaryInstruction);
 void testBinaryInstructions();
+void instructionDecode(const std::vector<std::string>& fileImage);
 
 int main(int argc, char* argv[]) {
 
@@ -85,7 +86,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    pipeline.run();
+    instructionDecode(fileImage);
+
+    // pipeline.run();
     return 0;
 
 }
@@ -185,5 +188,86 @@ void testBinaryInstructions() {
 
     pipeline2.printExecutionReport();
 
+
+}
+
+
+void instructionDecode(const vector<string>& fileImage){
+    int opcode;
+    int addressMode;
+    int rs;
+    int rt;
+    int rd;
+    int imm;
+
+    for (auto& str : fileImage){
+
+        // Convert hex string to binary string
+        string binaryString = "";
+        for (int i = 0; i < str.size(); i++) {
+            switch (toupper(str[i])) {
+                case '0': binaryString += "0000"; break;
+                case '1': binaryString += "0001"; break;
+                case '2': binaryString += "0010"; break;
+                case '3': binaryString += "0011"; break;
+                case '4': binaryString += "0100"; break;
+                case '5': binaryString += "0101"; break;
+                case '6': binaryString += "0110"; break;
+                case '7': binaryString += "0111"; break;
+                case '8': binaryString += "1000"; break;
+                case '9': binaryString += "1001"; break;
+                case 'A': binaryString += "1010"; break;
+                case 'B': binaryString += "1011"; break;
+                case 'C': binaryString += "1100"; break;
+                case 'D': binaryString += "1101"; break;
+                case 'E': binaryString += "1110"; break;
+                case 'F': binaryString += "1111"; break;
+            }
+        }
+        cout << str << ": " << endl;
+        printFields(binaryString);
+
+        
+        int bitmap = stoul(str, 0, 16);
+
+        opcode = bitmap >> 26;
+
+        if((!opcode % 2) && (opcode < 13)) {
+            addressMode = 1;
+        }
+        else {
+            addressMode = 0;
+        }
+
+        // Decode Instruction
+        if (addressMode == 0) { // Immediate addressing
+            rs = (bitmap & 0x3E00000) >> 21;
+            rt = (bitmap & 0x1F0000) >> 16;
+            rd = 0; // No destination register for immediate addressing
+            imm = bitmap & 0xFFFF;
+
+            // Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
+            if (imm & 0x8000) {
+                imm &= ~0x8000;    // Clear the sign bit
+                imm *= -1;
+            }
+
+
+        }
+        else { // Register addressing
+            rs = (bitmap & 0x03E00000) >> 21;
+            rt = (bitmap & 0x001F0000) >> 16;
+            rd = (bitmap & 0x0000F800) >> 11;
+            imm = 0; // No immediate value for register addressing
+        }
+
+        printf("%s opcode: %d rs: %d rt: %d rd: %d imm: %d\n", str.c_str(), opcode, rs, rt, rd, imm);  
+        
+        if(opcode == 17){
+            cout << "HALT" << endl;
+            return;
+        }
+
+    }
 
 }
