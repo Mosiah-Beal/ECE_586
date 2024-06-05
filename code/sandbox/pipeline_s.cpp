@@ -639,6 +639,8 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
         if(immString[0] == '1') {
             metadata.bitmap->imm = stoi(immString, 0, 2);
             metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
+            metadata.bitmap->imm &= 0xFFFF;
+            metadata.bitmap->imm *= -1;
         }
 
         cout << "After 2's complement:" << endl;
@@ -1105,7 +1107,7 @@ void Pipeline::run() {
         }
 
         // Cheat to end execution if we go past what we expect the instruction memory range to be
-        if(PC>4096 || PC < -4)
+        if(PC>200 || PC < -4)
         {
             cout << "Error: PC out of bounds" << endl;
             break;
