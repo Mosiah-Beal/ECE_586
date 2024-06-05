@@ -142,7 +142,7 @@ void printFields(std::string binaryInstruction) {
     std::cout << "rt: " << rt1 << std::endl;
     std::cout << "rd: " << rd1 << std::endl;
     std::cout << "imm: " << imm1 << std::endl;
-    std::cout << std::endl;
+    // std::cout << std::endl;
 }
 
 void testBinaryInstructions() {
@@ -204,7 +204,7 @@ void instructionDecode(const vector<string>& fileImage){
 
         // Convert hex string to binary string
         string binaryString = "";
-        for (int i = 0; i < str.size(); i++) {
+        for (int i = 0; i < (int) str.size(); i++) {
             switch (toupper(str[i])) {
                 case '0': binaryString += "0000"; break;
                 case '1': binaryString += "0001"; break;
@@ -261,7 +261,7 @@ void instructionDecode(const vector<string>& fileImage){
             imm = 0; // No immediate value for register addressing
         }
 
-        printf("%s opcode: %d rs: %d rt: %d rd: %d imm: %d\n", str.c_str(), opcode, rs, rt, rd, imm);  
+        printf("%s opcode: %d rs: %d rt: %d rd: %d imm: %d\n\n", str.c_str(), opcode, rs, rt, rd, imm);  
         
         if(opcode == 17){
             cout << "HALT" << endl;
