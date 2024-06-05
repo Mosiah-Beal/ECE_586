@@ -637,7 +637,8 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
 
         //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if(immString[0] == '1') {
-            metadata.bitmap->imm = - stoi(immString.substr(1), 0, 2);
+            metadata.bitmap->imm = stoi(immString, 0, 2);
+            metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
         }
 
         cout << "After 2's complement:" << endl;
