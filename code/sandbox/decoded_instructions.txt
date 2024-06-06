@@ -29,3 +29,32 @@
 44000000 opcode: 17 rs: 0 rt: 0 rd: 0 imm: 0     	108 // HALT                 #Halt execution
 
 
+[ID] Instruction 0: ADDI R11, R0, #804
+[ID] Instruction 1: ADDI R12, R0, #1596
+[ID] Instruction 2: ADDI R13, R0, #2400
+[ID] Instruction 3: ADDI R18, R0, #3200
+[ID] Instruction 4: ADDI R19, R0, #-1
+[ID] Instruction 5: SUBI R20, R0, #2
+[ID] Instruction 6: ADDI R22, R20, #78
+[ID] Instruction 7: ADDI R23, R0, #3
+[ID] Instruction 8: ADD R24, R19, R0
+[ID] Instruction 9: LDW R14, R11, #-4
+[ID] Instruction 10: LDW R15, R12, #4
+[ID] Instruction 11: LDW R17, R13, #0
+[ID] Instruction 12: SUB R16, R14, R15
+[ID] Instruction 13: OR R21, R16, R20
+[ID] Instruction 14: BEQ R19, R21, #3
+[ID] Instruction 15: MULI R17, R17, #2
+[ID] Instruction 16: JR R22
+[ID] Instruction 17: MUL R17, R17, R23
+[ID] Instruction 18: ADD R17, R17, R24
+[ID] Instruction 19: ADDI R11, R11, #4
+[ID] Instruction 20: ADDI R12, R12, #4
+[ID] Instruction 21: STW R17, R13, #0
+[ID] Instruction 22: ADDI R13, R13, #4
+[ID] Instruction 23: ADDI R18, R18, #4
+[ID] Instruction 24: LDW R25, R18, #0
+[ID] Instruction 25: BZ R25, #-16
+[ID] Instruction 26: XORI R25, R25, #63
+[ID] Instruction 27: HALT
+

@@ -161,7 +161,7 @@ void Pipeline::IF(string inputBin) {
     
     metadataPtr->originalLine = inputBin;   // store binary representation of instruction 
     
-    // printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
+    printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
     stages[_IF] = *metadataPtr; // store instruction in IF stage
     PC += 4; // increment program counter
 
@@ -187,7 +187,7 @@ void Pipeline::ID(instr_metadata &metadata) {
     // printFields(metadata);
 
     // Check for hazards
-    // Hazards();
+    Hazards();
 
     // Update busy registers
     setBusyRegs(metadata);
@@ -637,7 +637,6 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
 
         //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if(immString[0] == '1') {
-            metadata.bitmap->imm = stoi(immString, 0, 2);
             metadata.bitmap->imm = ~metadata.bitmap->imm + 1;
             metadata.bitmap->imm &= 0xFFFF;
             metadata.bitmap->imm *= -1;

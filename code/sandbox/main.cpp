@@ -86,9 +86,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    instructionDecode(fileImage);
+    // instructionDecode(fileImage);
 
-    // pipeline.run();
+    pipeline.run();
     return 0;
 
 }
