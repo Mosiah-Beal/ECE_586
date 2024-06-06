@@ -202,7 +202,7 @@ void instructionDecode(const vector<string>& fileImage){
     int imm;
 
     for (auto& str : fileImage){
-        cout << str << ": " << endl;
+        cout << endl << str << ": " << endl;
         
         // Convert hex string to binary string
         string binaryString = "";
@@ -227,14 +227,15 @@ void instructionDecode(const vector<string>& fileImage){
             }
         }
 
-        printFields(binaryString);
-        pipeline.getOpcode(binaryString);
+        // printFields(binaryString);
+        // pipeline.getOpcode(binaryString);
         int opcodeTest = pipeline.getOpcode(binaryString);
-        instr_metadata instr = pipeline.getInstruction(opcodeTest);
+        // instr_metadata instr = pipeline.getInstruction(opcodeTest);
         // pipeline.printFields(instr);
 
         pipeline.IF(binaryString);
         pipeline.ID(pipeline.stages[0]);
+        pipeline.printFields(pipeline.stages[1]);
 
         // Check if the instruction is a halt
         if (opcodeTest >= 17) {

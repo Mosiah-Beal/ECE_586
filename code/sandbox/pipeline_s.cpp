@@ -161,7 +161,7 @@ void Pipeline::IF(string inputBin) {
     
     metadataPtr->originalLine = inputBin;   // store binary representation of instruction 
     
-    printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
+    // printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
     stages[_IF] = *metadataPtr; // store instruction in IF stage
     PC += 4; // increment program counter
 
@@ -187,7 +187,7 @@ void Pipeline::ID(instr_metadata &metadata) {
     // printFields(metadata);
 
     // Check for hazards
-    Hazards();
+    // Hazards();
 
     // Update busy registers
     setBusyRegs(metadata);
@@ -631,9 +631,9 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
         metadata.bitmap->rd = 0; // No destination register for immediate addressing
         metadata.bitmap->imm = stoi(immString, 0, 2);
 
-        cout << "Before 2's complement:" << endl;
-        cout << "Immediate value: " << metadata.bitmap->imm << endl;
-        cout << "Immediate string: " << immString << endl;
+        // cout << "Before 2's complement:" << endl;
+        // cout << "Immediate value: " << metadata.bitmap->imm << endl;
+        // cout << "Immediate string: " << immString << endl;
 
         //Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
         if(immString[0] == '1') {
@@ -643,8 +643,8 @@ instr_metadata Pipeline::parseInstruction(instr_metadata &metadata) {
             metadata.bitmap->imm *= -1;
         }
 
-        cout << "After 2's complement:" << endl;
-        cout << "Immediate value: " << metadata.bitmap->imm << endl;
+        // cout << "After 2's complement:" << endl;
+        // cout << "Immediate value: " << metadata.bitmap->imm << endl;
 
   #ifdef DEBUG
 printf("%s R%d, R%d, #%d\n", metadata.name.c_str(), metadata.bitmap->rt, metadata.bitmap->rs, metadata.bitmap->imm);
