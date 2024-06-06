@@ -86,9 +86,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // instructionDecode(fileImage);
+    instructionDecode(fileImage);
 
-    pipeline.run();
+    // pipeline.run();
     return 0;
 
 }
@@ -231,51 +231,14 @@ void instructionDecode(const vector<string>& fileImage){
         pipeline.getOpcode(binaryString);
         int opcodeTest = pipeline.getOpcode(binaryString);
         instr_metadata instr = pipeline.getInstruction(opcodeTest);
-        pipeline.printFields(instr);
+        // pipeline.printFields(instr);
 
         pipeline.IF(binaryString);
         pipeline.ID(pipeline.stages[0]);
 
-
-
-        int bitmap = stoul(str, 0, 16);
-
-        opcode = bitmap >> 26;
-
-        if((!opcode % 2) && (opcode < 13)) {
-            addressMode = 1;
-        }
-        else {
-            addressMode = 0;
-        }
-
-        // Decode Instruction
-        if (addressMode == 0) { // Immediate addressing
-            rs = (bitmap & 0x3E00000) >> 21;
-            rt = (bitmap & 0x1F0000) >> 16;
-            rd = 0; // No destination register for immediate addressing
-            imm = bitmap & 0xFFFF;
-
-            // Check if the immediate value is negative. If so, invert the bits and add 1 to get 2s complement
-            if (imm & 0x8000) {
-                imm &= ~0x8000;    // Clear the sign bit
-                imm *= -1;
-            }
-
-
-        }
-        else { // Register addressing
-            rs = (bitmap & 0x03E00000) >> 21;
-            rt = (bitmap & 0x001F0000) >> 16;
-            rd = (bitmap & 0x0000F800) >> 11;
-            imm = 0; // No immediate value for register addressing
-        }
-
-        printf("%s opcode: %d rs: %d rt: %d rd: %d imm: %d\n\n", str.c_str(), opcode, rs, rt, rd, imm);  
-        
-        if(opcode == 17){
-            cout << "HALT" << endl;
-            return;
+        // Check if the instruction is a halt
+        if (opcodeTest >= 17) {
+            break;
         }
 
     }

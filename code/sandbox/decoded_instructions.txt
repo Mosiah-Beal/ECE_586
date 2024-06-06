@@ -1,0 +1,31 @@
+
+040B0324 opcode: 1 rs: 0 rt: 11 rd: 0 imm: 804   	0  // ADDI R11, R0, 804    #R11 = R0 + 804
+040C063C opcode: 1 rs: 0 rt: 12 rd: 0 imm: 1596  	4  // ADDI R12, R0, 1596   #R12 = R0 + 1596
+040D0960 opcode: 1 rs: 0 rt: 13 rd: 0 imm: 2400  	8  // ADDI R13, R0, 2400   #R13 = R0 + 2400
+04120C80 opcode: 1 rs: 0 rt: 18 rd: 0 imm: 3200  	12 // ADDI R18, R0, 3200   #R18 = R0 + 3200
+0413FFFF opcode: 1 rs: 0 rt: 19 rd: 0 imm: -32767 	16 // ADDI R19, R0, -1     #R19 = R0 - 1
+0C140002 opcode: 3 rs: 0 rt: 20 rd: 0 imm: 2     	20 // SUBI R20, R0, 2       #R20 = R0 - 2
+0696004E opcode: 1 rs: 20 rt: 22 rd: 0 imm: 78   	24 // ADDI R22, R20, 78     #R22 = R20 * 78
+04170003 opcode: 1 rs: 0 rt: 23 rd: 0 imm: 3     	28 // ADDI R23, R0, 3       #R23 = R0 + 3
+0260C000 opcode: 0 rs: 19 rt: 0 rd: 24 imm: 0    	32 // ADD R24, R19, R0      #R24 = R19 + R0
+316EFFFC opcode: 12 rs: 11 rt: 14 rd: 0 imm: -32764 	36 // LDW R14, R11, -4      #R14 = mem[R11 - 4]
+318F0004 opcode: 12 rs: 12 rt: 15 rd: 0 imm: 4   	40 // LDW R15, R12, 4       #R15 = mem[R12 + 4]
+31B10000 opcode: 12 rs: 13 rt: 17 rd: 0 imm: 0   	44 // LDW R17, R13, 0       #R17 = mem[R13 + 0]
+09CF8000 opcode: 2 rs: 14 rt: 15 rd: 0 imm: 0    	48 // SUB R15, R14, R2      #R15 = R14 - R2
+1A14A800 opcode: 6 rs: 16 rt: 20 rd: 21 imm: -10240 	52 // OR R21, R16, R20	    #R21 = R16 | R20
+3EB30003 opcode: 15 rs: 21 rt: 19 rd: 0 imm: 3   	56 // BEQ R21, R19, 3       #if (R21 == R19) PC += 3
+16310002 opcode: 5 rs: 17 rt: 17 rd: 0 imm: 2    	60 // MULI R17, R17, 2      R17 = R17 * 2
+42C00000 opcode: 16 rs: 22 rt: 0 rd: 0 imm: 0    	64 // JR R16                #Jump to address in R16
+12378800 opcode: 4 rs: 17 rt: 23 rd: 0 imm: -2048 	68 // SUBI R23, R17, -2048  #R23 = R17 - (-2048)
+02388800 opcode: 0 rs: 17 rt: 24 rd: 17 imm: 0   	72 // ADD R24, R17, R17     #R24 = R17 + R17
+056B0004 opcode: 1 rs: 11 rt: 11 rd: 0 imm: 4    	76 // ADDI R11, R11, 4      #R11 = R11 + 4
+058C0004 opcode: 1 rs: 12 rt: 12 rd: 0 imm: 4    	80 // ADDI R12, R12, 4      #R12 = R12 + 4
+35B10000 opcode: 13 rs: 13 rt: 17 rd: 0 imm: 0   	84 // STW R17, R13, 0       #mem[R13 + 0] = R17
+05AD0004 opcode: 1 rs: 13 rt: 13 rd: 0 imm: 4    	88 // ADDI R13, R13, 4      #R13 = R13 + 4
+06520004 opcode: 1 rs: 18 rt: 18 rd: 0 imm: 4    	92 // ADDI R18, R18, 4      #R18 = R18 + 4
+32590000 opcode: 12 rs: 18 rt: 25 rd: 0 imm: 0   	96 // LDW R25, R18, 0       #R25 = mem[R18 + 0]
+3B20FFF0 opcode: 14 rs: 25 rt: 0 rd: 0 imm: -32752 	100 // BZ R25, -16          #if (R25 == 0) PC += -16
+2F39003F opcode: 11 rs: 25 rt: 25 rd: 0 imm: 63  	104 // XORI R25, R25, 63    #R25 = R25 ^ 63
+44000000 opcode: 17 rs: 0 rt: 0 rd: 0 imm: 0     	108 // HALT                 #Halt execution
+
+

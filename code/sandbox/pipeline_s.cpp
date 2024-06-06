@@ -971,15 +971,15 @@ int Pipeline::getOpcode(string trace) {
         string opcodeStr = trace.substr(0, 2);
         int opcodeInt = stoi(opcodeStr, 0, 16);
 
-        cout << "[DEBUG - getOpcode]: Opcode (stoul): " << opcode << endl;
-        cout << "[DEBUG - getOpcode]: Opcode (string conversion): " << opcodeInt << endl;
+        // cout << "[DEBUG - getOpcode]: Opcode (stoul): " << opcode << endl;
+        // cout << "[DEBUG - getOpcode]: Opcode (string conversion): " << opcodeInt << endl;
         return opcodeInt;
     }
     else if(trace.length() == 32) {
         // opcode is in the upper 6 bits of the binary representation
         string opcodeStr = trace.substr(0, 6);
         int opcodeInt = stoi(opcodeStr, 0, 2);
-        cout << "[DEBUG - getOpcode]: Opcode (binary): " << opcodeInt << endl;
+        // cout << "[DEBUG - getOpcode]: Opcode (binary): " << opcodeInt << endl;
         return opcodeInt;
     }
 
@@ -1107,7 +1107,7 @@ void Pipeline::run() {
         }
 
         // Cheat to end execution if we go past what we expect the instruction memory range to be
-        if(PC>200 || PC < -4)
+        if(PC>300 || PC < -4)
         {
             cout << "Error: PC out of bounds" << endl;
             break;
