@@ -770,8 +770,9 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
         // CONTROL FLOW
         case 14: // BZ
             if (registers[metadata.bitmap->rs] == 0) {
+                cout << "\t[EX]: R" << metadata.bitmap->rs << " = 0" << "(" << registers[metadata.bitmap->rs] << ")" << endl;
                 cout << "\t[EX]: Branching from " << PC << " to ";
-                cout << PC + metadata.bitmap->imm * 4 << endl;
+                cout << (PC + metadata.bitmap->imm * 4) - 8 << endl;
                 PC += metadata.bitmap->imm * 4;
                 PC -= 8;    // Decrement the PC by 4 to account for the increment at the end of the cycle		
                 metadata.name = "NOP";
@@ -784,6 +785,7 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             break;
         case 15: // BEQ
             if (registers[metadata.bitmap->rt] == registers[metadata.bitmap->rs]) {
+                cout << "\t[EX]: R" << metadata.bitmap->rt << " = R" << metadata.bitmap->rs << endl;
                 cout << "\t[EX]: Branching from " << PC << " to ";
                 cout << PC + metadata.bitmap->imm * 4 << endl;
                 
@@ -806,6 +808,11 @@ instr_metadata Pipeline::executeInstruction(instr_metadata &metadata) {
             PC = registers[metadata.bitmap->rs];
             metadata.name = "NOP";
 	    flush();
+            break;
+        case 17: // HALT
+            cout << "\t[EX]: HALT" << endl;
+            metadata.name = "HALT";
+            criticalProblem = true;
             break;
         default:
             cout << "Error: Invalid opcode" << endl;
