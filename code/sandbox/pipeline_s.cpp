@@ -163,7 +163,7 @@ void Pipeline::IF(string inputBin) {
     // printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
     std::cout << "[IF]: Fetching bitmap = " << inputBin.substr(0, 6);
     std::cout << " " << inputBin.substr(6, 5) << " " << inputBin.substr(11, 5);
-    std::cout << " " << inputBin.substr(16, 16) << std::endl;
+    std::cout << " " << inputBin.substr(16, 5) << " " << inputBin.substr(21, 11) << endl;
     stages[_IF] = *metadataPtr; // store instruction in IF stage
     PC += 4; // increment program counter
 
@@ -173,18 +173,18 @@ void Pipeline::IF(string inputBin) {
 void Pipeline::ID(instr_metadata &metadata) {
     // check for NOP (initialization)
     if (metadata.name == "NOP") {
-        cout << "[ID]: NOP" << endl;
+        std::cout << "[ID]: NOP" << endl;
         return;
     }
 
     if(metadata.name == "ERROR") {
-        cout << "[ID]: ERROR" << endl;
+        std::cout << "[ID]: ERROR" << endl;
         return;
     }
 
     // Decode the instruction and fill the metadata
     metadata = parseInstruction(metadata);
-    cout << "[ID] ";
+    std::cout << "[ID] ";
     printInstruction(metadata);
     // printFields(metadata);
 
