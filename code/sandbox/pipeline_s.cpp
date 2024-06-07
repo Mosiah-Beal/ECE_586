@@ -115,7 +115,6 @@ void Pipeline::IF(int inputBin) {
 }
 
 void Pipeline::IF(string inputBin) {
-    
     if(inputBin.length() != 32) {
         // Convert hex string to binary string
         string binaryString = "";
@@ -161,7 +160,10 @@ void Pipeline::IF(string inputBin) {
     
     metadataPtr->originalLine = inputBin;   // store binary representation of instruction 
     
-    printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
+    // printf("[IF]: Fetching bitmap = %s\n", inputBin.substr(0, 6).c_str());
+    std::cout << "[IF]: Fetching bitmap = " << inputBin.substr(0, 6);
+    std::cout << " " << inputBin.substr(6, 5) << " " << inputBin.substr(11, 5);
+    std::cout << " " << inputBin.substr(16, 16) << std::endl;
     stages[_IF] = *metadataPtr; // store instruction in IF stage
     PC += 4; // increment program counter
 
